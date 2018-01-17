@@ -351,7 +351,7 @@
 			data.data.apikey = wkof.Apiv2.key;
 			wkof.Apiv2.user = data.data.username;
 			console.log('Caching user info...');
-			return wkof.file_cache.save('Apiv2.user', data, {user:data.data.username});
+			return wkof.file_cache.save('Apiv2.user', data);
 		})
 	}
 
