@@ -23,8 +23,8 @@
 	var supported_modules = {
 		'[version]': wkof_version,
 		Apiv2:    { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Apiv2.js'},
-		Menu:     { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Menu.js'          },
-		Settings: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Settings.js'      },
+		Menu:     { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Menu.js'},
+		Settings: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Settings.js'},
 	};
 	//########################################################################
 
@@ -343,17 +343,24 @@
 	//------------------------------
 	// Delete a file from the file_cache database.
 	//------------------------------
-	function file_cache_delete(name) {
+	function file_cache_delete(pattern) {
 		return file_cache_open().then(del);
 
 		function del(db) {
 			var del_promise = promise();
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
-			store.delete(name);
-			delete wkof.file_cache.dir[name];
+			if (!pattern instanceof RegExp) pattern = new RegExp('^'+pattern+'$');
+			var files = Object.keys(wkof.file_cache.dir).filter(function(file){
+				return file.match(pattern) !== null;
+			});
+			files.forEach(function(file){
+				store.delete(file)
+				delete wkof.file_cache.dir[file];
+			});
 			file_cache_dir_save();
-			transaction.oncomplete = del_promise.resolve.bind(null, name);
+			transaction.oncomplete = del_promise.resolve.bind(null, files);
+			return del_promise;
 		}
 	}
 
