@@ -1,6 +1,8 @@
 ﻿# ItemData module
 
-I've pushed some updates.  The ItemData modules is now online.  I haven't written up the documentation yet, but it's essentially just a single function if all you want to do is fetch data.  See the sample_client.js for an example.
+The ItemData modules provides an interface for fetching data from various registered data sources.  By default, only the Wanikani API is registered.  However, an interface is provided to allow registration of 3rd-party data.
+
+Below is a mini-tutorial for using the ItemData module.
 
 ### Using ItemData
 First, create a configuration object that specifies what you want to fetch, and what filters you want to apply.
