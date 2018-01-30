@@ -1,4 +1,4 @@
-# Apiv2.js
+# Apiv2 module
 
 ![Apiv2 members](images/Apiv2_members.png)
 

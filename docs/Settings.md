@@ -1,1 +1,1 @@
-# Settings.js
+# Settings module

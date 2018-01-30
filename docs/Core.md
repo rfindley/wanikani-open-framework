@@ -1,4 +1,4 @@
-# Core
+# Core module
 
 The Core.js contains:
 ```javascript

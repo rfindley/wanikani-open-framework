@@ -1,1 +1,1 @@
-# Menu.js
+# Menu module
