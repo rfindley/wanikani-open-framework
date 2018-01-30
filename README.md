@@ -5,7 +5,7 @@ This is an Open Framework for developing browser userscripts for the Wanikani we
 ## Table of Contents
 
 * [Installation](docs/Installation.md)
-* [Getting Started](docs/Getting\ Started.md)
+* [Getting Started](docs/Getting%20Started.md)
 * Modules
 	- [Apiv2](docs/Apiv2.md)
 	- [Core](docs/Core.md)
