@@ -9,15 +9,15 @@
 
 (function(global) {
 
-	// Don't allow multiple instances of this script.
-	if (global.wkof.Menu !== undefined) return;
-
+	//########################################################################
 	//------------------------------
 	// Published interface
 	//------------------------------
 	global.wkof.Menu = {
 		insert_script_link: insert_script_link
 	};
+
+	//########################################################################
 
 	//------------------------------
 	// Install 'Scripts' header in menu, if not present.

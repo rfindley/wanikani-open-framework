@@ -9,14 +9,11 @@
 
 (function(global) {
 
-	// Don't allow multiple instances of this script.
-	if (global.wkof.Settings !== undefined) return;
-	global.wkof.Settings = Settings;
+	const publish_context = false; // Set to 'true' to make context public.
 
-	const publish_context = true; // Set to 'true' to make context public.
-
+	//########################################################################
 	//------------------------------
-	// Published interface
+	// Constructor
 	//------------------------------
 	function Settings(config) {
 		var context = {
@@ -34,8 +31,11 @@
 		this.on_save = config.on_save;
 	};
 
-	var ready = false;
+	global.wkof.Settings = Settings;
+	//########################################################################
+
 	wkof.settings = {};
+	var ready = false;
 	var revert_settings = {};
 
 	//------------------------------

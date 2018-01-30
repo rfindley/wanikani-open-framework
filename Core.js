@@ -22,12 +22,17 @@
 	//------------------------------
 	var supported_modules = {
 		'[version]': wkof_version,
-		Apiv2:    { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Apiv2.js'},
-		Menu:     { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Menu.js'},
-		Settings: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Settings.js'},
+//		Apiv2:    { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Apiv2.js'},
+//		ItemData: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/ItemData.js'},
+//		Menu:     { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Menu.js'},
+//		Settings: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Settings.js'},
+		Apiv2:    { url: 'https://tsn-yocto/wkof/Apiv2.js'},
+		ItemData: { url: 'https://tsn-yocto/wkof/ItemData.js'},
+		Menu:     { url: 'https://tsn-yocto/wkof/Menu.js'},
+		Settings: { url: 'https://tsn-yocto/wkof/Settings.js'},
 	};
-	//########################################################################
 
+	//########################################################################
 	//------------------------------
 	// Published interface
 	//------------------------------

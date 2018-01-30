@@ -21,9 +21,10 @@ window.sample_client = {};
 	// up some functions to be called when each module is ready.
 	//-----------------------------------
 	// Modules that our script uses.
-	var modules = 'Apiv2, Menu, Settings';
+	var modules = 'Apiv2, ItemData, Menu, Settings';
 
 	wkof.include(modules);
+	wkof.ready('ItemData').then(fetch_items);
 	wkof.ready('Menu').then(install_menu);
 	wkof.ready('Settings').then(install_settings);
 	wkof.ready(modules).then(startup);
@@ -32,6 +33,67 @@ window.sample_client = {};
 	// Local variables
 	//-----------------------------------
 	var settings_dialog;
+
+	function fetch_items() {
+		var timer_a = new Date().getTime();
+		wkof.ItemData.get_items({
+			wk_items: {
+				options: { // See ItemData documentation for valid options
+					assignments: true, // Adds assignments endpoint as item.assignments
+					review_statistics: true, // Adds review_statistics endpoint as item.review_statistics
+					study_materials: true,
+				},
+				filters: { // See ItemData documentation for valid filters
+					item_type: {value: ['voc']},
+					level: {value: '1-3,5'}, // Levels 1 through 3, and 5
+//					level: {value: '-2 - +0'}, // User's current and previous two levels
+//					level: {value: '*, !+0'}, // All levels, except current level
+//					level: {value: '1 - -1'}, // Levels 1 to [current - 1]
+//					level: {value: '+1'}, // Next level only
+//					srs: {value: ['appr1','appr2','appr3','appr4']}, // All apprentice items
+//					srs: {value: ['burn'], invert:true}, // All items except burned
+//					have_burned: {value: true}, // All items that were burned once (including resurrected)
+				},
+			},
+//			core10k: {}, // If someone wants to create this... ^_^
+		})
+		.then(process_items.bind(null,'timer_a',timer_a));
+	}
+
+	function process_items(name, starttime, items) {
+		var endtime = new Date().getTime();
+		console.log(name+': Found '+items.length+' items (took '+(endtime-starttime)+'ms)');
+
+		// Make the results available from the console as 'items'.
+		window.items = items;
+
+		// Demonstrate the contents of returned items:
+		if (items.length === 0) return; // Can't show anything if no items returned.
+		var item = items[0];
+		var str = item.object+': '; // subjects.object ('vocabulary')
+		str += item.data.slug;        // subjects.data.slug ('アメリカ人')
+		if (item.data.meanings) {
+			var meanings = item.data.meanings.map(entry => entry.meaning).join(', ');
+			str += '\n   meaning: '+meanings;
+		}
+		if (item.assignments) {
+			str += '\n       srs: '+item.assignments.srs_stage_name; // assignments.data.srs_stage_name
+		}
+		if (item.review_statistics) {
+			var mc = item.review_statistics.meaning_correct;
+			var mi = item.review_statistics.meaning_incorrect;
+			var rc = item.review_statistics.reading_correct;
+			var ri = item.review_statistics.reading_incorrect;
+			str += '\n  accuracy: Meaning = '+mc+'/'+(mc+mi)+', Reading = '+rc+'/'+(rc+ri);
+		}
+		if (item.study_materials) {
+			if (item.study_materials.meaning_synonyms !== null) {
+				var synonyms = item.study_materials.meaning_synonyms.join(', ');
+				str += '\n  synonyms: '+synonyms;
+			}
+		}
+		console.log(str);
+	}
 
 	//-----------------------------------
 	// Install some sample links in the Wanikani menu.

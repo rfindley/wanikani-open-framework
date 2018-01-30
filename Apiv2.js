@@ -9,9 +9,6 @@
 
 (function(global) {
 
-	// Don't allow multiple instances of this script.
-	if (global.wkof.Apiv2 !== undefined) return;
-
 	//########################################################################
 	//------------------------------
 	// Published interface.
@@ -19,10 +16,8 @@
 	global.wkof.Apiv2 = {
 		clear_cache: clear_cache,       // Clear the user cache
 		fetch_endpoint: fetch_endpoint, // Fetch a complete API endpoint, including pagination
-		get_apikey: get_apikey,         // Get the API key (via Promise)
 		get_endpoint: get_endpoint,     // Scripts can signal which API endpoints they need
 		is_valid_apikey_format: is_valid_apikey_format, // Check if string is a valid API key
-		print_apikey: print_apikey,     // Output the API key to the console
 	};
 
 	//########################################################################
@@ -61,11 +56,8 @@
 		var clear_promises = [];
 		var dir = wkof.file_cache.dir;
 		for (var idx in available_endpoints) {
-			var endpoint = available_endpoints[idx];
-			if (endpoint === 'subjects') continue;
-			var filename = 'Apiv2.'+endpoint;
-			var file = dir[filename];
-			if (!file) continue;
+			var filename = 'Apiv2.'+available_endpoints[idx];
+			if (filename === 'Apiv2.subjects' || !dir[filename]) continue;
 			clear_promises.push(filename);
 		}
 		clear_promises = clear_promises.map(delete_file);
@@ -83,9 +75,14 @@
 	}
 
 	//------------------------------
-	// Fetch the API key from the Account page.
+	// Get the API key (either from localStorage, or from the Account page).
 	//------------------------------
-	function fetch_key() {
+	function get_apikey() {
+		if (is_valid_apikey_format(wkof.Apiv2.key))
+			return Promise.resolve(wkof.Apiv2.key);
+		if (using_apikey_override) 
+			return Promise.reject('Invalid api2_key_override in localStorage!');
+		wkof.set_state('wkof.Apiv2.key', 'fetching');
 		console.log('Fetching API key...');
 		return wkof.load_file('https://www.wanikani.com/settings/account')
 		.then(function(page){
@@ -98,39 +95,24 @@
 			} else {
 				return Promise.reject('No API key (version 2) found on account page!');
 			}
-		});
-	}
-
-	//------------------------------
-	// Get the API key (either from localStorage, or from the Account page).
-	//------------------------------
-	function get_apikey() {
-		if (is_valid_apikey_format(wkof.Apiv2.key))
-			return Promise.resolve(wkof.Apiv2.key);
-		wkof.set_state('wkof.Apiv2.key', 'fetching');
-		return fetch_key().then(function(apikey){
+		})
+		.then(function(apikey){
 			wkof.set_state('wkof.Apiv2.key', 'ready');
 			return apikey;
 		});
 	}
 
 	//------------------------------
-	// Print the apikey on the console.
-	//------------------------------
-	function print_apikey() {
-		get_apikey()
-		.then(function(apikey){
-			console.log('Apiv2 key = "'+apikey+'"')
-		});
-	}
-
-	//------------------------------
 	// Fetch a URL asynchronously, and pass the result as resolved Promise data.
 	//------------------------------
-	function fetch_endpoint(endpoint, filters, last_update, progress_callback) {
+	function fetch_endpoint(endpoint, options) {
 		var fetch_promise = promise();
 		var retry_cnt, endpoint_data, url, headers;
 		var bad_key_cnt = 0;
+		if (!options) options = {};
+		var filters = options.filters;
+		var last_update = options.last_update;
+		var progress_callback = options.progress_callback;
 
 		get_apikey()
 		.then(setup_and_fetch);
@@ -232,9 +214,8 @@
 			console.log('Seems we have a bad API key.  Erasing stored info.');
 			localStorage.removeItem('apiv2_key');
 			wkof.Apiv2.key = undefined;
-			fetch_key()
+			get_apikey()
 			.then(populate_user_cache)
-			.then(get_apikey)
 			.then(setup_and_fetch);
 		}
 	}
@@ -244,9 +225,10 @@
 	//------------------------------
 	// Get endpoint data from cache with updates from API.
 	//------------------------------
-	function get_endpoint(ep_name, progress_callback) {
+	function get_endpoint(ep_name, options) {
 		var get_promise = promise();
 		var merged_data;
+		if (!options) options = {};
 		if (available_endpoints.indexOf(ep_name) < 0) {
 			get_promise.reject(new Error('Invalid endpoint name "'+ep_name+'"'));
 			return get_promise;
@@ -259,7 +241,9 @@
 		function fetch(cache_data) {
 			if (typeof cache_data === 'string') cache_data = {last_update:null};
 			merged_data = cache_data;
-			fetch_endpoint(ep_name, null, cache_data.last_update, progress_callback)
+			var fetch_options = Object.assign({}, options);
+			fetch_options.last_update = cache_data.last_update;
+			fetch_endpoint(ep_name, fetch_options)
 			.then(process_api_data, handle_error);
 		}
 
@@ -320,6 +304,7 @@
 			if (user_info.data.apikey === wkof.Apiv2.key) {
 				if (using_apikey_override || (user_info.data.username === user)) {
 					wkof.Apiv2.user = user_info.data.username;
+					wkof.user = user_info.data;
 					return;
 				}
 			}
@@ -335,7 +320,7 @@
 		})
 		.catch(function(){
 			// Either empty cache, or user mismatch.  Fetch key, then populate cache.
-			return fetch_key().then(clear_cache).then(populate_user_cache);
+			return get_apikey().then(clear_cache).then(populate_user_cache);
 		});
 
 	}
@@ -346,12 +331,13 @@
 	function populate_user_cache() {
 		console.log('Fetching user info...');
 		return fetch_endpoint('user')
-		.then(function(data){
+		.then(function(user_info){
 			// Store the apikey in the cache.
-			data.data.apikey = wkof.Apiv2.key;
-			wkof.Apiv2.user = data.data.username;
+			user_info.data.apikey = wkof.Apiv2.key;
+			wkof.Apiv2.user = user_info.data.username;
+			wkof.user = user_info.data
 			console.log('Caching user info...');
-			return wkof.file_cache.save('Apiv2.user', data);
+			return wkof.file_cache.save('Apiv2.user', user_info);
 		})
 	}
 
