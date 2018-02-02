@@ -11,8 +11,9 @@ _[Disclaimer: This project is currently in early development, so changes are exp
 * [Overview](#overview)
 * [Installation](#installation)
 * [Getting Started](#getting_started)
-  - [wkof members](#wkof_members)
-  - [Core script](#core)
+  - [`wkof` Members](#wkof_members)
+  - [Core Overview](#core_overview)
+  - [File Caching](#file_caching)
 * [Modules](#modules)
   - [ItemData](#item_data_module)
   - [Apiv2](#apiv2_module)
@@ -54,7 +55,7 @@ To verify installation:
 wkof
 ```
 
-3. If the framework is properly installed, the console should list the currently-loaded components of the framework, similar to the result shown below.  If `wkof` is undefined, framework is not properly installed.
+3. If the framework is properly installed, the console should list the currently-loaded components of the framework, similar to the result shown below.  If `wkof` is undefined, the framework is not properly installed.
 
 ```javascript
 {include: f, ready: f, load_file: f, load_css: f, load_script: f, ...}
@@ -82,7 +83,7 @@ Expand the `wkof` object, and examine its contents:
 The contents shown above come from the Core script, which we discuss in the next section.
 Your console may show additional contents if any framework modules are loaded.
 
-## <a id="core">Core script</a>
+## <a id="core_overview">Core Overview</a>
 
 We can group these contents into the following categories:
 
@@ -108,6 +109,9 @@ Event functions:
 * **`trigger()`** - A function for triggering an event.
 
 In addition to the above core functions, each module (when loaded) will have its own sub-object.  These sub-objects are discussed in the corresponding module documentation.
+
+## <a id="file_caching">File Caching</a>
+
 
 -----
 
