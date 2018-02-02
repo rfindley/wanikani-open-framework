@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name        Wanikani Open Framework - Data module
+// @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
-// @description Data module for Wanikani Open Framework
+// @description ItemData module for Wanikani Open Framework
 // @version     1.0.0
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -15,8 +15,12 @@
 	//------------------------------
 	global.wkof.ItemData = {
 		presets: {},
-		registry: {},
-		get_items: get_items, // Get items
+		registry: {
+			sources: {},
+			indices: {},
+		},
+		get_items: get_items,
+		get_index: get_index,
 	};
 
 	//########################################################################
@@ -28,12 +32,24 @@
 	// Get the items specified by the configuration.
 	//------------------------------
 	function get_items(config) {
+		// Default to WK 'subjects' only.
+		if (!config) config = {wk_items:{}};
+
+		// Allow comma-separated list of WK-only endpoints.
+		if (typeof config === 'string') {
+			var endpoints = split_list(config)
+			var config = {wk_items:{options:{}}};
+			for (var idx in endpoints)
+				config.wk_items.options[endpoints[idx]] = true;
+		}
+
+		// Fetch the requested endpoints.
 		var fetch_promise = promise();
 		var items = [];
 		var remaining = 0;
 		for (var cfg_name in config) {
 			var cfg = config[cfg_name];
-			var spec = wkof.ItemData.registry[cfg_name];
+			var spec = wkof.ItemData.registry.sources[cfg_name];
 			if (!spec || typeof spec.fetcher !== 'function') {
 				console.log('wkof.ItemData.get_items() - Config "'+cfg_name+'" not registered!');
 				continue;
@@ -57,8 +73,6 @@
 		return fetch_promise;
 	}
 
-	var min_update_interval = 60;
-	var wk_item_cache = {};
 	//------------------------------
 	// Get the wk_items specified by the configuration.
 	//------------------------------
@@ -75,62 +89,30 @@
 		for (var idx in available_endpoints) {
 			var ep_name = available_endpoints[idx];
 			if (ep_name === 'subjects' || cfg_options[ep_name] === true)
-				ep_promises.push(fetch(ep_name));
+				ep_promises.push(
+					wkof.Apiv2.get_endpoint(ep_name, options)
+					.then(process_data.bind(null, ep_name))
+				);
 		}
 		return Promise.all(ep_promises)
 		.then(function(all_data){
 			return all_data[0];
 		});
 
-		function fetch(ep_name) {
-			var ep = wk_item_cache[ep_name];
-			// Return existing promise if we're in the middle of a fetch,
-			// or if fetch is done and cache is still fresh.
-			if (ep && (ep.ref_cnt > 1 || ((now - ep.last_update)/1000 < min_update_interval))) {
-				ep.ref_cnt++;
-				return ep.fetch_promise;
-			}
-
-			// Initialize cache.
-			wk_item_cache[ep_name] = ep = {
-				fetch_promise: promise(),
-				ref_cnt: 1,
-				last_update: now
-			};
-
-			// Fetch data.
-			wkof.Apiv2.get_endpoint(ep_name, options)
-			.then(process_data.bind(null, ep_name), ep.fetch_promise.reject);
-
-			return ep.fetch_promise;
-		}
-
+		//============
 		function process_data(ep_name, ep_data) {
-			var ep = wk_item_cache[ep_name];
-			if (ep_name === 'subjects') {
-				ep.ref_cnt--;
-				ep.fetch_promise.resolve(ep_data);
-			} else {
-				var subj_ep = wk_item_cache['subjects'];
-				subj_ep.fetch_promise.then(cross_link.bind(null, ep_name, ep_data))
-				.catch(function(error){
-					ep.ref_cnt--;
-					ep.fetch_promise.reject(error);
-				});
-			}
+			if (ep_name === 'subjects') return ep_data;
+			// Merge with 'subjects' when 'subjects' is done fetching.
+			return ep_promises[0].then(cross_link.bind(null, ep_name, ep_data));
 		}
 
+		//============
 		function cross_link(ep_name, ep_data, subjects) {
-			var ep = wk_item_cache[ep_name];
-
 			for (var id in ep_data) {
 				var record = ep_data[id];
 				var subject_id = record.data.subject_id;
 				subjects[subject_id][ep_name] = record.data;
 			}
-
-			ep.ref_cnt--;
-			ep.fetch_promise.resolve(ep_data);
 		}
 	}
 
@@ -177,10 +159,18 @@
 	}
 
 	//------------------------------
+	// Return the items indexed by an indexing function.
+	//------------------------------
+	function get_index(items, index_name) {
+		var index_func = wkof.ItemData.registry.indices[index_name];
+		if (typeof index_func !== 'function') throw new Error('wkof.ItemData.index_by() - Invalid index function "'+index_name+'"');
+		return index_func(items);
+	}
+
+	//------------------------------
 	// Register wk_items data source.
 	//------------------------------
-	wkof.ItemData.registry['wk_items'] = {
-		type: 'items_source',
+	wkof.ItemData.registry.sources['wk_items'] = {
 		description: 'Wanikani Item Data',
 		fetcher: get_wk_items,
 		options: {
@@ -234,6 +224,69 @@
 			},
 		}
 	};
+
+	//------------------------------
+	// Index by item_type
+	//------------------------------
+	wkof.ItemData.registry.indices['item_type'] = function(items) {
+		var index = {};
+		for (var idx in items) {
+			var item = items[idx];
+			if (!item.hasOwnProperty('object')) continue;
+			var value = item.object;
+			if (!index[value]) index[value] = [];
+			index[value].push(item);
+		}
+		return index;
+	}
+
+	//------------------------------
+	// Index by reading
+	//------------------------------
+	wkof.ItemData.registry.indices['reading'] = function(items) {
+		var index = {};
+		for (var idx in items) {
+			var item = items[idx];
+			if (!item.hasOwnProperty('data') || !item.data.hasOwnProperty('readings')) continue;
+			if (!Array.isArray(item.data.readings)) continue;
+			var readings = item.data.readings;
+			for (var idx2 in readings) {
+				var reading = readings[idx2].reading;
+				if (reading === 'None') continue;
+				if (!index[reading]) index[reading] = [];
+				index[reading].push(item);
+			}
+		}
+		return index;
+	}
+
+	//------------------------------
+	// Index by slug
+	//------------------------------
+	wkof.ItemData.registry.indices['slug'] = function(items) {
+		var index = {};
+		for (var idx in items) {
+			var item = items[idx];
+			if (!item.hasOwnProperty('data') || !item.data.hasOwnProperty('slug')) continue;
+			var value = item.data.slug;
+			if (!index[value]) index[value] = item;
+		}
+		return index;
+	}
+
+	//------------------------------
+	// Index by subject_id
+	//------------------------------
+	wkof.ItemData.registry.indices['subject_id'] = function(items) {
+		var index = {};
+		for (var idx in items) {
+			var item = items[idx];
+			if (!item.hasOwnProperty('id')) continue;
+			var value = item.id;
+			if (!index[value]) index[value] = item;
+		}
+		return index;
+	}
 
 	//------------------------------
 	// Given an array of item type criteria (e.g. ['rad', 'kan', 'voc']), return
@@ -306,6 +359,7 @@
 		}
 		return levels;
 
+		//============
 		function to_num(num) {
 			num = (num[0] < '0' ? wkof.user.level : 0) + Number(num)
 			return Math.min(Math.max(1, num), wkof.user.max_level_granted_by_subscription);

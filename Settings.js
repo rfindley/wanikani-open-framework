@@ -46,6 +46,15 @@
 		if (wkof.settings[context.script_id] === undefined) wkof.settings[context.script_id] = {};
 		var saved = wkof.settings[context.script_id], value;
 		var pages = [], depth = 0;
+
+		var html = '';
+		for (var name in context.config)
+			html += parse_item(name, context.config[name]);
+		if (pages.length > 0)
+			html = '<div class="wkof_stabs"><ul>'+pages.join('')+'</ul>'+html+'</div>';
+		return '<form>'+html+'</form>';
+
+		//============
 		function parse_item(name, item) {
 			depth++;
 			if (typeof item.type !== 'string') return '';
@@ -114,13 +123,6 @@
 			depth--;
 			return html;
 		}
-		
-		var html = '';
-		for (var name in context.config)
-			html += parse_item(name, context.config[name]);
-		if (pages.length > 0)
-			html = '<div class="wkof_stabs"><ul>'+pages.join('')+'</ul>'+html+'</div>';
-		return '<form>'+html+'</form>';
 	}
 
 	//------------------------------
@@ -158,6 +160,12 @@
 			resize: resize.bind(context,context),
 			close: close.bind(context,context)
 		});
+
+		$('.wkof_stabs').tabs();
+		dialog.dialog('open');
+		$('#wkofs_'+context.script_id+' .setting').on('change', setting_changed.bind(null,context));
+
+		//============
 		function resize(context, event, ui){
 			var dialog = $('#wkofs_'+context.script_id);
 			var is_narrow = dialog.hasClass('narrow');
@@ -166,10 +174,6 @@
 			else if (!is_narrow && ui.size.width < 490)
 				dialog.addClass('narrow');
 		}
-
-		$('.wkof_stabs').tabs();
-		dialog.dialog('open');
-		$('#wkofs_'+context.script_id+' .setting').on('change', setting_changed.bind(null,context));
 	}
 
 	//------------------------------

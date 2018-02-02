@@ -74,80 +74,97 @@
 		}
 	}
 
+	wkof.set_state('wkof.Apiv2.key', 'not_ready');
+
 	//------------------------------
 	// Get the API key (either from localStorage, or from the Account page).
 	//------------------------------
 	function get_apikey() {
+		// If we already have the apikey, just return it.
 		if (is_valid_apikey_format(wkof.Apiv2.key))
 			return Promise.resolve(wkof.Apiv2.key);
+
+		// If we don't have the apikey, but override was requested, return error.
 		if (using_apikey_override) 
 			return Promise.reject('Invalid api2_key_override in localStorage!');
-		wkof.set_state('wkof.Apiv2.key', 'fetching');
+
+		// Fetch the apikey from the account page.
 		console.log('Fetching API key...');
+		wkof.set_state('wkof.Apiv2.key', 'fetching');
 		return wkof.load_file('https://www.wanikani.com/settings/account')
-		.then(function(page){
+		.then(parse_page);
+
+		function parse_page(page){
 			var page = $(page);
 			var apikey = page.find('#user_api_key_v2').val();
-			if (wkof.Apiv2.is_valid_apikey_format(apikey)) {
-				wkof.Apiv2.key = apikey;
-				localStorage.setItem('apiv2_key', apikey);
-				return apikey;
-			} else {
+			if (!wkof.Apiv2.is_valid_apikey_format(apikey))
 				return Promise.reject('No API key (version 2) found on account page!');
-			}
-		})
-		.then(function(apikey){
+
+			// Store the api key.
+			wkof.Apiv2.key = apikey;
+			localStorage.setItem('apiv2_key', apikey);
 			wkof.set_state('wkof.Apiv2.key', 'ready');
 			return apikey;
-		});
+		};
 	}
 
 	//------------------------------
 	// Fetch a URL asynchronously, and pass the result as resolved Promise data.
 	//------------------------------
 	function fetch_endpoint(endpoint, options) {
-		var fetch_promise = promise();
 		var retry_cnt, endpoint_data, url, headers;
 		var bad_key_cnt = 0;
+
+		// Parse options.
 		if (!options) options = {};
 		var filters = options.filters;
-		var last_update = options.last_update;
+		if (!filters) filters = {};
 		var progress_callback = options.progress_callback;
 
+		// Get timestamp of last fetch from options (if specified)
+		var last_update = options.last_update;
+
+		// If no prior fetch, set last_update to ancient date.
+		if (typeof last_update !== 'string') {
+			if (filters.updated_after === undefined)
+				last_update = '1999-01-01T01:00:00.000000Z';
+			else
+				last_update = filters.updated_after;
+		}
+
+		// Set up URL and headers
+		url = "https://www.wanikani.com/api/v2/" + endpoint;
+
+		// Add user-specified data filters to the URL
+		filters.updated_after = last_update;
+		var arr = [];
+		for (var name in filters) {
+			var value = filters[name];
+			if (Array.isArray(value)) value = value.join(',');
+			arr.push(name+'='+value);
+		}
+		url += '?'+arr.join('&');
+
+		// Get API key and fetch the data.
+		var fetch_promise = promise();
 		get_apikey()
 		.then(setup_and_fetch);
 
 		return fetch_promise;
 
+		//============
 		function setup_and_fetch() {
-			if (!filters) filters = {};
-			if (typeof last_update !== 'string') {
-				if (filters.updated_after === undefined)
-					last_update = '1999-01-01T01:00:00.000000Z';
-				else
-					last_update = filters.updated_after;
-			}
-
-			url = "https://www.wanikani.com/api/v2/" + endpoint;
 			headers = {
-//				'Wanikani-Revision': '20170710',
+			//	'Wanikani-Revision': '20170710', // Placeholder?
 				'Authorization': 'Bearer '+wkof.Apiv2.key,
 			};
 			headers['If-Modified-Since'] = new Date(last_update).toUTCString(last_update);
-
-			filters.updated_after = last_update;
-			var arr = [];
-			for (var name in filters) {
-				var value = filters[name];
-				if (Array.isArray(value)) value = value.join(',');
-				arr.push(name+'='+value);
-			}
-			url += '?'+arr.join('&');
 
 			retry_cnt = 0;
 			fetch();
 		}
 
+		//============
 		function fetch() {
 			retry_cnt++;
 			var request = new XMLHttpRequest();
@@ -158,19 +175,31 @@
 			request.send();
 		}
 
+		//============
 		function received(event) {
+			// ReadyState of 4 means transaction is complete.
 			if (this.readyState !== 4) return;
+
+			// Check for rate-limit error.  Delay and retry if necessary.
 			if (this.status === 429 && retry_cnt < 40) {
 				var delay = Math.min((retry_cnt * 250), 2000);
 				setTimeout(fetch, delay);
 				return;
 			}
+
+			// Check for bad API key.
 			if (this.status === 401) return bad_apikey();
+
+			// Check of 'no updates'.
 			if (this.status >= 300) return fetch_promise.reject({status:this.status, url:url});
+
+			// Process the response data.
 			var json = JSON.parse(event.target.response);
 
+			// Data may be a single object, or collection of objects.
+			// Collections are paginated, so we may need more fetches.
 			if (json.object === 'collection') {
-				// Multi-page endpoint.
+				// It's a multi-page endpoint.
 				var first_new, so_far, total;
 				if (endpoint_data === undefined) {
 					// First page of results.
@@ -184,33 +213,46 @@
 				}
 				endpoint_data = json;
 				total = json.total_count;
+
+				// Call the 'progress' callback.
 				if (typeof progress_callback === 'function')
 					progress_callback(endpoint, first_new, so_far, total);
-				if (json.pages.next_url === null) {
-					fetch_promise.resolve(endpoint_data);
-				} else {
+
+				// If there are more pages, fetch the next one.
+				if (json.pages.next_url !== null) {
 					retry_cnt = 0;
 					url = json.pages.next_url;
 					fetch();
+					return;
 				}
+
+				// This was the last page.  Return the data.
+				fetch_promise.resolve(endpoint_data);
+
 			} else {
-				// Single-page result.
+				// Single-page result.  Report single-page progress, and return data.
 				if (typeof progress_callback === 'function')
 					progress_callback(endpoint, 0, 1, 1);
 				fetch_promise.resolve(json);
 			}
 		}
 
+		//============
 		function bad_apikey(){
+			// If we are using an override key, abort and return error.
 			if (using_apikey_override) {
 				fetch_promise.reject('Wanikani doesn\'t recognize the apiv2_key_override key ("'+wkof.Apiv2.key+'")');
 				return;
 			}
+
+			// If bad key received too many times, abort and return error.
 			bad_key_cnt++;
 			if (bad_key_cnt > 1) {
 				fetch_promise.reject('Aborting fetch: Bad key reported multiple times!');
 				return;
 			}
+
+			// We received a bad key.  Report on the console, then try fetching the key (and data) again.
 			console.log('Seems we have a bad API key.  Erasing stored info.');
 			localStorage.removeItem('apiv2_key');
 			wkof.Apiv2.key = undefined;
@@ -220,24 +262,47 @@
 		}
 	}
 
-	wkof.set_state('wkof.Apiv2.key', 'not_ready');
+
+	var min_update_interval = 60;
+	var ep_cache = {};
 
 	//------------------------------
 	// Get endpoint data from cache with updates from API.
 	//------------------------------
 	function get_endpoint(ep_name, options) {
-		var get_promise = promise();
-		var merged_data;
 		if (!options) options = {};
+
+		// We cache data for 'min_update_interval' seconds.
+		// If within that interval, we return the cached data.
+		// User can override cache via "options.force_update = true"
+		var ep_info = ep_cache[ep_name];
+		if (ep_info) {
+			// If still awaiting prior fetch return pending promise.
+			// Also, not force_update, return non-expired cache (i.e. resolved promise)
+			if (options.force_update !== true || ep_info.timer === undefined)
+				return ep_info.promise;
+			// User is requesting force_update, and we have unexpired cache.
+			// Clear the expiration timer since we will re-fetch anyway.
+			clearTimeout(ep_info.timer);
+		}
+
+		// Create a promise to fetch data.  The resolved promise will also serve as cache.
+		var get_promise = promise();
+		ep_cache[ep_name] = {promise: get_promise};
+
+		// Make sure the requested endpoint is valid.
+		var merged_data;
 		if (available_endpoints.indexOf(ep_name) < 0) {
 			get_promise.reject(new Error('Invalid endpoint name "'+ep_name+'"'));
 			return get_promise;
 		}
 
+		// Perform the fetch, and process the data.
 		wkof.file_cache.load('Apiv2.'+ep_name)
 		.then(fetch, fetch);
 		return get_promise;
 
+		//============
 		function fetch(cache_data) {
 			if (typeof cache_data === 'string') cache_data = {last_update:null};
 			merged_data = cache_data;
@@ -247,8 +312,12 @@
 			.then(process_api_data, handle_error);
 		}
 
+		//============
 		function process_api_data(fetched_data) {
+			// Mark the data with the last_update timestamp reported by the server.
 			if (fetched_data.data_updated_at !== null) merged_data.last_update = fetched_data.data_updated_at;
+
+			// Process data according to whether it is paginated or not.
 			if (fetched_data.object === 'collection') {
 				if (merged_data.data === undefined) merged_data.data = {};
 				for (var idx = 0; idx < fetched_data.data.length; idx++) {
@@ -258,16 +327,34 @@
 			} else {
 				merged_data.data = fetched_data.data;
 			}
+
+			// If it's the 'user' endpoint, we insert the apikey before caching.
 			if (ep_name === 'user') merged_data.data.apikey = wkof.Apiv2.key;
+
+			// Save data to cache and finish up.
 			wkof.file_cache.save('Apiv2.'+ep_name, merged_data)
-			.then(get_promise.resolve.bind(null, merged_data.data));
+			.then(finish);
 		}
 
+		//============
+		function finish() {
+			// Return the data, then set up a cache expiration timer.
+			get_promise.resolve(merged_data.data);
+			ep_cache[ep_name].timer = setTimeout(expire_cache, min_update_interval*1000);
+		}
+
+		//============
+		function expire_cache() {
+			// Delete the data from cache.
+			delete ep_cache[ep_name];
+		}
+
+		//============
 		function handle_error(error) {
 			if (typeof error === 'string')
 				get_promise.reject(error);
 			if (error.status >= 300 && error.status <= 399)
-				get_promise.resolve(merged_data.data);
+				finish();
 			else
 				get_promise.reject('Error '+error.status+' fetching "'+error.url+'"');
 		}
@@ -299,9 +386,14 @@
 
 		// Make sure cache is still valid
 		return wkof.file_cache.load('Apiv2.user')
-		.then(function(user_info){
+		.then(process_user_info)
+		.catch(retry);
+
+		//============
+		function process_user_info(user_info) {
 			// If cache matches, we're done.
 			if (user_info.data.apikey === wkof.Apiv2.key) {
+				// We don't check username when using override key.
 				if (using_apikey_override || (user_info.data.username === user)) {
 					wkof.Apiv2.user = user_info.data.username;
 					wkof.user = user_info.data;
@@ -317,12 +409,13 @@
 				// We're using override.  No need to fetch key, just populate cache.
 				return clear_cache().then(populate_user_cache);
 			}
-		})
-		.catch(function(){
+		}
+
+		//============
+		function retry() {
 			// Either empty cache, or user mismatch.  Fetch key, then populate cache.
 			return get_apikey().then(clear_cache).then(populate_user_cache);
-		});
-
+		}
 	}
 
 	//------------------------------
