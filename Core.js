@@ -142,7 +142,7 @@
 	//------------------------------
 	function load_file(url, use_cache) {
 		var fetch_promise = promise();
-		if (use_cache) {
+		if (use_cache === true) {
 			return file_cache_load(url, use_cache).catch(fetch_url);
 		} else {
 			return fetch_url();
