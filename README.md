@@ -177,8 +177,7 @@ wkof.file_cache.save('timeline_settings', timeline_settings)
     console.log('Save complete!');
 });
 
-// Output
-> Save complete!
+// Output:  Save complete!
 ```
 
 -----
@@ -203,8 +202,7 @@ wkof.file_cache.load('timeline_settings')
     console.log('Timeline graph height is: ' + settings.graph_height);
 });
 
-// Output
-> Timeline graph height is: 100
+// Output:  Timeline graph height is: 100
 ```
 
 -----
@@ -393,7 +391,7 @@ function do_something() {
 Retrieves a set of items, applies filters to select a subset of those items, and returns an array of the resulting items.  These items can then be indexed by specific fields using the `get_index()` function.
 
 #### Parameters:
-* **`config`** - _(optional)_ A string or object that specifies the data sources and filters to be used in fetching the desired items.  Descripted in detail <a href="#get_items_config">below</a>.
+* **`config`** - _(optional)_ A string or object that specifies the data sources and filters to be used in fetching the desired items.  (Described in detail <a href="#get_items_config">below</a>).
 
 #### Return value:
 * **`Promise`** - A Promise that resolves with the selected items.
@@ -416,8 +414,7 @@ function process_items(items) {
     console.log('Retrieved ' + items.length + ' items.');
 }
 
-// Output
-> Retrieved 8792 items.
+// Output:  Retrieved 8792 items.
 ```
 
 #### _Example 2: Fetch items using comma-delimited list of endpoints_
@@ -440,8 +437,7 @@ function process_items(items) {
     console.log('Retrieved ' + items.length + ' items.');
 }
 
-// Output
-> Retrieved 8792 items.
+// Output:  Retrieved 8792 items.
 ```
 
 ### <a id="get_items_config">Using a configuration object with `wkof.ItemData.get_items()`</a>
@@ -585,8 +581,58 @@ function process_items(items) {
     console.log('Retrieved ' + items.length + ' items.');
 }
 
-// Output
-> Retrieved 171 items.
+// Output:  Retrieved 171 items.
+```
+
+-----
+
+### <a id="itemdata_get_index">`wkof.ItemData.get_index(items, index_name)`</a>
+
+Given an array of items returned by `wkof.ItemData.get_items()`, this function creates an index for looking up items in the array based on a specified data field, such as `subject_id`, `item_type`, `slug`, etc.
+
+#### Parameters:
+* **`items`** - An array of items returned by `wkof.ItemData.get_items()`.
+* **`index_name`** - Name of one of the available index functions.
+
+#### Return value:
+* **`object`** - An object whose keys are the field values of the indexed field.
+
+The following index fields are currently available, and can be found in `wkof.ItemData.registry.indices`:
+
+* **`item_type`** - Index by `item.object` (e.g. `radical`, `kanji`, `vocabulary`).
+* **`subject_id`** - Index by `item.subject_id`.
+* **`slug`** - Index by `item.data.slug` (e.g. `"大変"`, `"ground"`).
+* **`reading`** - Index by `item.data.readings[].reading` (e.g. `げつ`, `がつ`, `つき`).
+
+**\* Note:** More index functions will be added over time as I find a need for them.  In the meantime, you can use the existing functions as a reference for creating your own.  Also, I welcome suggestions for additional indices, though keep in mind that I want to limit the official list to ones likely to be used by other scripters.
+
+#### _Example 1: Fetch items and index by `item_type`_
+```javascript
+// Include the ItemData module, and wait for it to be ready.
+wkof.include('ItemData');
+wkof.ready('ItemData').then(fetch_items);
+
+// This function is called when the ItemData module is ready to use.
+function fetch_items() {
+    // No 'config' parameter, so we retrieve only the Wanikani /subjects endpoint.
+    wkof.ItemData.get_items()
+    .then(process_items);
+}
+
+function process_items(items) {
+    // Create an index by item type.
+    var type_index = wkof.ItemData.get_index(items, 'item_type');
+    var rad = type_index['radical'];
+    var kan = type_index['kanji'];
+    var voc = type_index['vocabulary'];
+    console.log(
+        'Found ' + rad.length + ' radicals, '+
+        kan.length + ' kanji, and '+
+        voc.length + ' vocabulary.'
+    );
+}
+
+// Output:  Found 478 radicals, 2027 kanji, and 6287 vocabulary.
 ```
 
 -----
