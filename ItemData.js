@@ -124,6 +124,8 @@
 		var filters = [];
 		for (var filter_name in config.filters) {
 			var filter_cfg = config.filters[filter_name];
+			if (typeof filter_cfg !== 'object' || filter_cfg.value === undefined)
+				filter_cfg = {value:filter_cfg};
 			var filter_value = filter_cfg.value;
 			var filter_spec = spec.filters[filter_name];
 			if (typeof filter_spec.filter_func !== 'function' ||
@@ -293,6 +295,13 @@
 	// an array containing 'true' for each item type contained in the criteria.
 	//------------------------------
 	function item_type_to_arr(filter_value) {
+		if (typeof filter_value === 'string') {
+			if (filter_value.indexOf(',') >= 0) {
+				filter_value = split_list(filter_value);
+			} else {
+				filter_value = [filter_value];
+			}
+		}
 		return {
 			radical: (filter_value.indexOf('rad') >= 0),
 			kanji: (filter_value.indexOf('kan') >= 0),
@@ -305,6 +314,13 @@
 	// array containing 'true' for each srs level contained in the criteria.
 	//------------------------------
 	function srs_to_arr(filter_value) {
+		if (typeof filter_value === 'string') {
+			if (filter_value.indexOf(',') >= 0) {
+				filter_value = split_list(filter_value);
+			} else {
+				filter_value = [filter_value];
+			}
+		}
 		return ['init','appr1','appr2','appr3','appr4','guru1','guru2','mast','enli','burn']
 			.map(function(name){
 				return filter_value.indexOf(name) >= 0;
