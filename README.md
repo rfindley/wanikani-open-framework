@@ -19,11 +19,13 @@ _[Disclaimer: This project is currently in early development, so changes are exp
       - [`load()`](#file_cache_load)
       - [`delete()`](#file_cache_delete)
       - [`clear()`](#file_cache_clear)
-    - [`Loading external files`](#loading_files)
+    - [Loading external files](#loading_files)
       - [`load_file()`](#load_file)
       - [`load_script()`](#load_script)
       - [`load_css()`](#load_css)
   - [ItemData](#item_data_module)
+    - [`get_items()`](#itemdata_get_items)
+    - [`get_index()`](#itemdata_get_index)
   - [Apiv2](#apiv2_module)
   - [Menu](#menu_module)
   - [Settings](#settings_module)
@@ -91,8 +93,9 @@ Expand the `wkof` object, and examine its contents:
 The contents shown above come from the Core script, which we discuss in the next section.
 Your console may show additional contents if any framework modules are loaded.
 
-# <a id="reference">Reference</a>
 -----
+
+# <a id="reference">Reference</a>
 
 ## <a id="core_module">Core</a>
 
@@ -136,7 +139,9 @@ The members of the `file_cache` object are:
 
 ### <a id="file_cache_dir">`wkof.file_cache.dir`</a>
 
-Example **`dir`** object format:
+An object containing a list of files stored in `file_cache`.
+
+#### _Example:_
 ```javascript
 {
     "filename1": {added: "2/6/2018, 3:57:23 PM", last_loaded: "2/6/2018, 3:57:23 PM"}
@@ -242,10 +247,10 @@ wkof.file_cache.clear();
 
 ## <a id="loading_files">Loading External Files</a>
 
-We have three functions for loading files from an external URL:
+There are three functions for loading files from an external URL:
 * **`load_file()`** - Loads any file type from a URL, .
-* **`load_script()`** - A function for loading a Javascript file, and installing it into the DOM.
-* **`load_css()`** - A function for loading a CSS file, and installing it into the DOM.
+* **`load_script()`** - Loads a Javascript file, and installing it into the DOM.
+* **`load_css()`** - Loads a CSS file, and installing it into the DOM.
 
 -----
 
@@ -255,12 +260,12 @@ Loads a file from a URL.
 
 #### _Parameters:_
 * **`url`** - URL of file to load.
-* **`use_cache`** - (optional) If `true`, try loading from cache, and store a copy if fetched (default: false).
+* **`use_cache`** - _(optional)_ If `true`, try loading from cache, and store a copy if fetched (default: false).
 
 #### _Return value:_
 * **`Promise`** - A Promise that resolves with the contents at the specified URL.
 
-#### _Example:_
+#### _Example: Retrieve the user's APIv2 key from their account page_
 ```javascript
 // Load the user's account page, and retrieve their APIv2 key.
 wkof.load_file('https://www.wanikani.com/settings/account', false /* use_cache */)
@@ -282,18 +287,30 @@ Loads a script file from a URL, and installs it into the page.
 
 #### Parameters:
 * **`url`** - URL of script file to load.
-* **`use_cache`** - (optional) If `true`, try loading from cache, and store a copy if fetched (default: false).
+* **`use_cache`** - _(optional)_ If `true`, try loading from cache, and store a copy if fetched (default: false).
 
 #### Return value:
 * **`Promise`** - A Promise that resolves when the script is successfully installed.
 
-#### _Example:_
+#### _Example: Load jQuery UI and theme_
 ```javascript
-// Load the user's account page, and retrieve their APIv2 key.
-wkof.load_script('https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js', true /* use_cache */)
-.then(function(html_string){
+// URLs for jQuery UI library and theme
+var script = 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js';
+var css = 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css';
+
+// Instead of using `.then()` on each fetch, we will group them with a Promise.all()
+var promises = [];
+promises[0] = wkof.load_script(script, true /* use_cache */);
+promises[1] = wkof.load_css(css, true /* use_cache */);
+
+// Wait until all files are loaded, then do something
+Promise.all(promises).then(do_something);
+
+// This function is called when all the files requested above are loaded.
+function do_something() {
+    // TODO: Do something that makes use of jQuery UI
     console.log('jQuery UI script loaded!');
-});
+};
 ```
 
 -----
@@ -304,23 +321,157 @@ Loads a CSS file from a URL, and installs it into the page.
 
 #### Parameters:
 * **`url`** - URL of CSS file to load.
-* **`use_cache`** - (optional) If `true`, try loading from cache, and store a copy if fetched (default: false).
+* **`use_cache`** - _(optional)_ If `true`, try loading from cache, and store a copy if fetched (default: false).
 
 #### Return value:
 * **`Promise`** - A Promise that resolves when the CSS is successfully installed.
 
-#### _Example:_
+#### _Example: Load jQuery UI and theme_
 ```javascript
-// Load the user's account page, and retrieve their APIv2 key.
-wkof.load_css('https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', true /* use_cache */)
-.then(function(html_string){
-    console.log('jQuery UI theme loaded!');
-});
+// URLs for jQuery UI library and theme
+var script = 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js';
+var css = 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css';
+
+// Instead of using `.then()` on each fetch, we will group them with a Promise.all()
+var promises = [];
+promises[0] = wkof.load_script(script, true /* use_cache */);
+promises[1] = wkof.load_css(css, true /* use_cache */);
+
+// Wait until all files are loaded, then do something
+Promise.all(promises).then(do_something);
+
+// This function is called when all the files requested above are loaded.
+function do_something() {
+    // TODO: Do something that makes use of jQuery UI
+    console.log('jQuery UI script loaded!');
+};
 ```
 
 -----
 
 ## <a id="item_data_module">ItemData module</a>
+
+The `ItemData` module:
+* Provides an interface for fetching and caching item data.
+* Cross-links the following Wanikani API endpoint data:
+  - `/subjects`
+  - `/assignments`
+  - `/review_statistics`
+  - `/study_materials`
+* Provides a set of filters for selecting subsets of item data by various criteria.
+* Allows client scripts to register additional data sources (such as an external set of Core10k vocabulary).
+* Allows client scripts to register additional filters for selecting items (such as by leech score).
+
+\* Not yet implemented:
+* Provides a global 'Loading...' progress bar when fetching data.
+
+Internally, the module also:
+* Coordinates requests from all client scripts to prevent redundant requests to the Wanikani API.
+* Reduces browser memory consumption by sharing item objects across all scripts.
+* Retrieves only the data requested by the user's active client scripts.
+
+To use the `ItemData` module, you must include it from your script, wait until the module is ready before accessing it:
+
+```javascript
+wkof.include('ItemData');
+wkof.ready('ItemData').then(do_something);
+
+function do_something() {
+    // TODO:  Add your code to access the ItemData interface.
+    console.log('wkof.ItemData is loaded');
+}
+```
+
+-----
+
+### <a id="itemdata_get_items">`wkof.ItemData.get_items([config])`</a>
+
+Retrieves a set of items, applies filters to select a subset of those items, and returns an array of the resulting items.  These items can then be indexed by specific fields using the `get_index()` function.
+
+#### Parameters:
+* **`config`** - _(optional)_ A string or object that specifies the data sources and filters to be used in fetching the desired items.  Descripted in detail below.
+
+#### Return value:
+* **`Promise`** - A Promise that resolves with the selected items.
+
+#### _Example 1: Fetch items using default configuration (`/subjects` endpoint only)_
+```javascript
+// Include the ItemData module, and wait for it to be ready.
+wkof.include('ItemData');
+wkof.ready('ItemData').then(fetch_items);
+
+// This function is called when the ItemData module is ready to use.
+function fetch_items() {
+    // No 'config' parameter, so we retrieve only the Wanikani /subjects endpoint.
+    wkof.ItemData.get_items()
+    .then(process_items);
+}
+
+function process_items(items) {
+    // TODO: Do something with the items we retrieved.
+    console.log('Retrieved ' + items.length + ' items.');
+}
+
+// Output
+> Retrieved 8792 items.
+```
+
+#### _Example 2: Fetch items using comma-delimited list of endpoints_
+```javascript
+// Include the ItemData module, and wait for it to be ready.
+wkof.include('ItemData');
+wkof.ready('ItemData').then(fetch_items);
+
+// This function is called when the ItemData module is ready to use.
+function fetch_items() {
+    // Retrieve only the /subjects and /study_materials endpoints.
+    var config = 'subjects, study_materials';
+
+    wkof.ItemData.get_items(config)
+    .then(process_items);
+}
+
+function process_items(items) {
+    // TODO: Do something with the items we retrieved.
+    console.log('Retrieved ' + items.length + ' items.');
+}
+
+// Output
+> Retrieved 8792 items.
+```
+
+#### _Example 3: Fetch items using configuration object_
+```javascript
+// Include the ItemData module, and wait for it to be ready.
+wkof.include('ItemData');
+wkof.ready('ItemData').then(fetch_items);
+
+// This function is called when the ItemData module is ready to use.
+function fetch_items() {
+    // Fetch only radicals from levels 1-3, including /subjects and /assignments
+    var config = {
+        wk_items: {
+            options: {subjects: true, assignments: true},
+            filters: {
+                level: '1-3',
+//                item_type: 'rad'
+            }
+        }
+    };
+
+    wkof.ItemData.get_items(config)
+    .then(process_items);
+}
+
+function process_items(items) {
+    // TODO: Do something with the items we retrieved.
+    window.rjf = items;
+    console.log('Retrieved ' + items.length + ' items.');
+}
+
+// Output
+> Retrieved 8792 items.
+```
 
 -----
 
