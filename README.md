@@ -25,6 +25,10 @@ _[Disclaimer: This project is currently in early development, so changes are exp
       - [`load_css()`](#load_css)
   - [ItemData](#item_data_module)
     - [`get_items()`](#itemdata_get_items)
+      - [Using a configuration object](#get_items_config)
+        - [Options](#get_items_options)
+        - [Filters](#get_items_filters)
+        - [Inverting Filters](#get_items_invert)
     - [`get_index()`](#itemdata_get_index)
   - [Apiv2](#apiv2_module)
   - [Menu](#menu_module)
@@ -389,7 +393,7 @@ function do_something() {
 Retrieves a set of items, applies filters to select a subset of those items, and returns an array of the resulting items.  These items can then be indexed by specific fields using the `get_index()` function.
 
 #### Parameters:
-* **`config`** - _(optional)_ A string or object that specifies the data sources and filters to be used in fetching the desired items.  Descripted in detail below.
+* **`config`** - _(optional)_ A string or object that specifies the data sources and filters to be used in fetching the desired items.  Descripted in detail <a href="#get_items_config">below</a>.
 
 #### Return value:
 * **`Promise`** - A Promise that resolves with the selected items.
@@ -424,8 +428,8 @@ wkof.ready('ItemData').then(fetch_items);
 
 // This function is called when the ItemData module is ready to use.
 function fetch_items() {
-    // Retrieve only the /subjects and /study_materials endpoints.
-    var config = 'subjects, study_materials';
+    // Retrieve only the /subjects and /assignments endpoints.
+    var config = 'subjects, assignments';
 
     wkof.ItemData.get_items(config)
     .then(process_items);
@@ -440,6 +444,118 @@ function process_items(items) {
 > Retrieved 8792 items.
 ```
 
+### <a id="get_items_config">Using a configuration object with `wkof.ItemData.get_items()`</a>
+
+The configuration object can be complex, depending on the desired configuration.  At the top level, it contains a list of data sources that `get_items()` will retrieve from.
+
+```javascript
+var config = {
+    example_source1: {...},
+    example_source2: {...}
+};
+```
+
+Available sources are found in `wkof.ItemData.registry.sources`.  The only source defined by the Open Framework itself is `wk_items`, which represents the Wanikani API.  Client scripts can define additional data sources by adding a source definition to the registry.
+
+```javascript
+var config = {
+    wk_items: {...}
+};
+```
+
+Each source can have an `options` sub-object and a `filters` sub-object.  These are described in detail below.
+
+```javascript
+var config = {
+    wk_items: {
+        options: {...},
+        filters: {...}
+    }
+};
+```
+
+#### <a id="get_items_options">Options</a>
+
+The `options` sub-object allows you to set non-default values when configuring a source.  The available options are found in `wkof.ItemData.registry.sources.<source_name>.options`.
+
+For `wk_items`, the following options are available:
+* **`assignments`** - If `true`, add info from the `/assignments` endpoint to each item.  (Default is `false`).
+* **`review_statistics`** - If `true`, add info from the `/review_statistics` endpoint to each item.  (Default is `false`).
+* **`study_materials`** - If `true`, add info from the `/study_materials` endpoint to each item.  (Default is `false`).
+
+For example, the following configuration will fetch the `/subjects`, `/assignments`, and `/review_statistics` endpoints. (Note: The `/subjects` endpoint will always be fetched, since all other endpoints reference the subject data).
+
+```javascript
+var config = {
+    wk_items: {
+        options: {
+            assignments: true,
+            review_statistics: true
+        }
+    }
+};
+```
+
+#### <a id="get_items_filters">Filters</a>
+
+The `filters` sub-object allows you to add criteria for narrowing down the list of items returned by `get_items()`.  For example, you can filter by Wanikani level, SRS level, etc.  If no filters are specified in the config, all retrieved items will be returned.
+
+The available filters are found in `wkof.ItemData.registry.sources.<source_name>.filters`.
+
+For `wk_items`, the following filters are currently available:
+* **`item_type`** - An array or comma-delimited string specifying the item types to return.  Supported values are `rad`, `kan`, and `voc`.
+
+  Examples:
+  - `['rad','kan']` - _(array)_ Return radicals and kanji.
+  - `'kan, voc'` - _(string)_ Return kanji and vocabulary.
+
+* **`level`** - A comma-separated list of Wanikani levels or level ranges to return.
+
+  Examples:
+  - `'1,2,3'` - Return items from levels 1, 2, and 3.
+  - `'1-3,5'` - Return items from levels 1 through 3, and 5.
+  - `'-1'` - Return items from your previous level (current level minus 1).
+  - `'+1'` - Return items from your next level (current level plus 1).
+  - `'-5 - +0'` - Return items from your last 5 levels, including your current level.
+  - `'1 - -1'` - Return items from levels 1 through your last level (current minus 1).
+  - `'*, !-3 - -1'` - Return items from all levels, but exclude the last three levels.
+
+* **`srs`** - An array or comma-delimited string specifying the SRS levels to return.  Supported values are `appr1`, `appr2`, `appr3`, `appr4`, `guru1`, `guru2`, `mast`, `enli`, and `burn`.
+
+  Examples:
+  - `['appr1','appr2','appr3','appr4']` - Return all Apprentice items (Apprentice 1 through 4).
+  - `'mast, enli, burn'` - Return all Master, Enlightened, and Burned items.
+
+* **`have_burned`** - _(boolean)_ If `true`, return all items that have been previously burned, even if they are currently resurrected.  If `false`, return all items that have never been burned.
+
+#### <a id="get_items_invert">Inverting filters</a>
+
+You can optionally invert the results of any filter by converting the filter value to an object, and adding an `invert` member to the object.  Below is a before-and-after example:
+
+```javascript
+// Fetch all current-level vocabulary.  (Filters not inverted)
+var config = {
+    wk_items: {
+        options: {subjects: true, assignments: true},
+        filters: {
+            level: '+0',
+            item_type: 'voc'
+        }
+    }
+};
+
+// Fetch all EXCEPT current-level vocabulary. (Filters inverted)
+var config = {
+    wk_items: {
+        options: {subjects: true, assignments: true},
+        filters: {
+            level: {value: '+0', invert: true},
+            item_type: {value: 'voc', invert: true}
+        }
+    }
+};
+```
+
 #### _Example 3: Fetch items using configuration object_
 ```javascript
 // Include the ItemData module, and wait for it to be ready.
@@ -448,13 +564,14 @@ wkof.ready('ItemData').then(fetch_items);
 
 // This function is called when the ItemData module is ready to use.
 function fetch_items() {
-    // Fetch only radicals from levels 1-3, including /subjects and /assignments
+    // Fetch only radicals and kanji from levels 1-3.
+    // Include /subjects and /assignments endpoints
     var config = {
         wk_items: {
             options: {subjects: true, assignments: true},
             filters: {
                 level: '1-3',
-//                item_type: 'rad'
+                item_type: 'rad, kan'
             }
         }
     };
@@ -465,12 +582,11 @@ function fetch_items() {
 
 function process_items(items) {
     // TODO: Do something with the items we retrieved.
-    window.rjf = items;
     console.log('Retrieved ' + items.length + ' items.');
 }
 
 // Output
-> Retrieved 8792 items.
+> Retrieved 171 items.
 ```
 
 -----
