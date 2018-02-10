@@ -231,33 +231,48 @@
 	// Macro to build a function to index by a specific field.
 	// Set make_subarrays to true if more than one item can share the same field value (e.g. same item_type).
 	//------------------------------
-	function make_index_func(name, field, make_subarrays) {
-		wkof.ItemData.registry.indices[name] = new Function('items',
+	function make_index_func(name, field, entry_type) {
+		var fn = '';
+		fn +=
 			'var index = {}, value;\n'+
 			'for (var idx in items) {\n'+
 			'    var item = items[idx];\n'+
 			'    try {\n'+
 			'        value = '+field+';\n'+
 			'    } catch(e) {continue;}\n'+
-			'    if (value === null || value === undefined) continue;\n'+
-			(make_subarrays === true ?
-			    '    if (!index[value]) index[value] = [];\n'+
-			    '    index[value].push(item);\n'
-			:
-			    '    if (!index[value]) index[value] = item;\n'
-			)+
+			'    if (value === null || value === undefined) continue;\n';
+		if (entry_type === 'array') {
+			fn +=
+				'    if (index[value] === undefined) {\n'+
+				'        index[value] = [item];\n'+
+				'        continue;\n'+
+				'    }\n';
+		} else {
+			fn +=
+				'    if (index[value] === undefined) {\n'+
+				'        index[value] = item;\n'+
+				'        continue;\n'+
+				'    }\n';
+			if (entry_type === 'single_or_array') {
+				fn +=
+					'    if (!Array.isArray(index[value]))\n'+
+					'        index[value] = [index[value]];\n';
+			}
+		}
+		fn +=
+			'    index[value].push(item);\n'+
 			'}\n'+
 			'return index;'
-		);
+		wkof.ItemData.registry.indices[name] = new Function('items', fn);
 	}
 
 	// Build some index functions.
-	make_index_func('item_type', 'item.object', true /* make_subarrays */);
-	make_index_func('level', 'item.data.level', true /* make_subarrays */);
-	make_index_func('slug', 'item.data.slug', false /* make_subarrays */);
-	make_index_func('srs_stage', 'item.assignments.srs_stage', true /* make_subarrays */);
-	make_index_func('srs_stage_name', 'item.assignments.srs_stage_name', true /* make_subarrays */);
-	make_index_func('subject_id', 'item.id', false /* make_subarrays */);
+	make_index_func('item_type', 'item.object', 'array');
+	make_index_func('level', 'item.data.level', 'array');
+	make_index_func('slug', 'item.data.slug', 'single_or_array');
+	make_index_func('srs_stage', 'item.assignments.srs_stage', 'array');
+	make_index_func('srs_stage_name', 'item.assignments.srs_stage_name', 'array');
+	make_index_func('subject_id', 'item.id', 'single');
 
 	//------------------------------
 	// Index by reading
