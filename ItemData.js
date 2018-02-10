@@ -228,19 +228,36 @@
 	};
 
 	//------------------------------
-	// Index by item_type
+	// Macro to build a function to index by a specific field.
+	// Set make_subarrays to true if more than one item can share the same field value (e.g. same item_type).
 	//------------------------------
-	wkof.ItemData.registry.indices['item_type'] = function(items) {
-		var index = {};
-		for (var idx in items) {
-			var item = items[idx];
-			if (!item.hasOwnProperty('object')) continue;
-			var value = item.object;
-			if (!index[value]) index[value] = [];
-			index[value].push(item);
-		}
-		return index;
+	function make_index_func(name, field, make_subarrays) {
+		wkof.ItemData.registry.indices[name] = new Function('items',
+			'var index = {}, value;\n'+
+			'for (var idx in items) {\n'+
+			'    var item = items[idx];\n'+
+			'    try {\n'+
+			'        value = '+field+';\n'+
+			'    } catch(e) {continue;}\n'+
+			'    if (value === null || value === undefined) continue;\n'+
+			(make_subarrays === true ?
+			    '    if (!index[value]) index[value] = [];\n'+
+			    '    index[value].push(item);\n'
+			:
+			    '    if (!index[value]) index[value] = item;\n'
+			)+
+			'}\n'+
+			'return index;'
+		);
 	}
+
+	// Build some index functions.
+	make_index_func('item_type', 'item.object', true /* make_subarrays */);
+	make_index_func('level', 'item.data.level', true /* make_subarrays */);
+	make_index_func('slug', 'item.data.slug', false /* make_subarrays */);
+	make_index_func('srs_stage', 'item.assignments.srs_stage', true /* make_subarrays */);
+	make_index_func('srs_stage_name', 'item.assignments.srs_stage_name', true /* make_subarrays */);
+	make_index_func('subject_id', 'item.id', false /* make_subarrays */);
 
 	//------------------------------
 	// Index by reading
@@ -258,34 +275,6 @@
 				if (!index[reading]) index[reading] = [];
 				index[reading].push(item);
 			}
-		}
-		return index;
-	}
-
-	//------------------------------
-	// Index by slug
-	//------------------------------
-	wkof.ItemData.registry.indices['slug'] = function(items) {
-		var index = {};
-		for (var idx in items) {
-			var item = items[idx];
-			if (!item.hasOwnProperty('data') || !item.data.hasOwnProperty('slug')) continue;
-			var value = item.data.slug;
-			if (!index[value]) index[value] = item;
-		}
-		return index;
-	}
-
-	//------------------------------
-	// Index by subject_id
-	//------------------------------
-	wkof.ItemData.registry.indices['subject_id'] = function(items) {
-		var index = {};
-		for (var idx in items) {
-			var item = items[idx];
-			if (!item.hasOwnProperty('id')) continue;
-			var value = item.id;
-			if (!index[value]) index[value] = item;
 		}
 		return index;
 	}
