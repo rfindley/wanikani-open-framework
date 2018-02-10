@@ -28,7 +28,7 @@
 		'reviews','study_materials','subjects','summary','user'
 	];
 	var using_apikey_override = false;
-	var tried_fetching_apikey = false;
+	var skip_username_check = false;
 
 	//------------------------------
 	// Retrieve the username from the page.
@@ -366,7 +366,13 @@
 	//------------------------------
 	function validate_user_cache() {
 		var user = get_username();
-		if (!user) return Promise.reject('Couldn\'t extract username from user menu!');
+		if (!user) {
+			// Username unavailable if not logged in, or if on Lessons or Reviews pages.
+			// If not logged in, stop running the framework.
+			if (location.pathname.match(/^(\/|\/login)$/) !== null)
+				return Promise.reject('Couldn\'t extract username from user menu!  Not logged in?');
+			skip_username_check = true;
+		}
 
 		var apikey = localStorage.getItem('apiv2_key_override');
 		if (apikey !== null) {
@@ -394,7 +400,7 @@
 			// If cache matches, we're done.
 			if (user_info.data.apikey === wkof.Apiv2.key) {
 				// We don't check username when using override key.
-				if (using_apikey_override || (user_info.data.username === user)) {
+				if (using_apikey_override || skip_username_check || (user_info.data.username === user)) {
 					wkof.Apiv2.user = user_info.data.username;
 					wkof.user = user_info.data;
 					return;
