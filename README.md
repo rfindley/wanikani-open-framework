@@ -617,9 +617,7 @@ The following index fields are currently available, and can be found in `wkof.It
   ```javascript
   {いち: Array(4), ひと: Array(6), かず: Array(4), に: Array(8), ふた: Array(2), …}
   ```
-* **`slug`** - Index by `item.data.slug` (e.g. `"大変"`, `"ground"`).
-
-  <small>**_\* Note: Some `slug` entries may be an array!  For example,_ `slug['円']` _contains both a kanji and vocab._**</small>
+* **`slug`** - Index by `item.data.slug` (e.g. `"大変"`, `"ground"`). **_(\* See note below!)_**
   ```javascript
   {ground: {…}, fins: {…}, drop: {…}, seven: {…}, slide: {…}, …}
   ```
@@ -636,7 +634,9 @@ The following index fields are currently available, and can be found in `wkof.It
   {1: {…}, 2: {…}, 3: {…}, 4: {…}, 5: {…}, 6: {…}, 7: {…}, …}
   ```
 
-#### _Example index by `slug`:_
+**_\* Note: Some `slug` entries may be an array!  For example,_ `slug['円']` _contains both a kanji and vocab._**
+
+#### _Example: index by `slug`:_
 ```javascript
 {
     "ground": {id: 1, object: "radical", data: {slug: "ground", ... }, ...},
