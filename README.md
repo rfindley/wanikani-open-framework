@@ -54,7 +54,7 @@ The framework is structured as follows:
 # <a id="installation">Installation</a>
 
 > **_[Note: While the framework is still in prototype, you can update the modules by deleting them from `file_cache` via a pattern-match for 'github' URLs:_**
-> 
+>
 > ```javascript
 > wkof.file_cache.delete(/github/);
 > ```
@@ -605,14 +605,53 @@ Given an array of items returned by `wkof.ItemData.get_items()`, this function c
 
 The following index fields are currently available, and can be found in `wkof.ItemData.registry.indices`:
 
-* **`item_type`** - Index by `item.object` (e.g. `radical`, `kanji`, `vocabulary`).
-* **`subject_id`** - Index by `item.subject_id`.
+* **`item_type`** - Index by `item.object`
+  ```javascript
+  {radical: Array(478), kanji: Array(2027), vocabulary: Array(6287)}
+  ```
+* **`level`** - Index by `item.data.level` (Wanikani level).
+   ```javascript
+   {1: Array(86), 2: Array(161), 3: Array(127), 4: Array(176), 5: Array(195), …}
+   ```
+* **`reading`** - Index by `item.data.readings[].reading`
+  ```javascript
+  {いち: Array(4), ひと: Array(6), かず: Array(4), に: Array(8), ふた: Array(2), …}
+  ```
 * **`slug`** - Index by `item.data.slug` (e.g. `"大変"`, `"ground"`).
-* **`reading`** - Index by `item.data.readings[].reading` (e.g. `げつ`, `がつ`, `つき`).
 
-**\* Note:** More index functions will be added over time as I find a need for them.  In the meantime, you can use the existing functions as a reference for creating your own.  Also, I welcome suggestions for additional indices, though keep in mind that I want to limit the official list to ones likely to be used by other scripters.
+  <small>**_\* Note: Some `slug` entries may be an array!  For example,_ `slug['円']` _contains both a kanji and vocab._**</small>
+  ```javascript
+  {ground: {…}, fins: {…}, drop: {…}, seven: {…}, slide: {…}, …}
+  ```
+* **`srs_stage`** - Index by `item.assignments.srs_stage` (e.g. `1`=Apprentice1, `9`=Burned).
+  ```javascript
+  {0: Array(9), 1: Array(26), 3: {…}, 4: Array(12), 5: Array(15), 6: Array(6), …}
+  ```
+* **`srs_stage_name`** - Index by `item.assignments.srs_stage_name` (e.g. `Apprentice 1` ... `Burned`).
+  ```javascript
+  {Burned: Array(293), Enlightened: Array(3), Guru II: Array(6), Master: Array(4), Guru I: Array(15), …}
+  ```
+* **`subject_id`** - Index by `item.subject_id`.
+  ```javascript
+  {1: {…}, 2: {…}, 3: {…}, 4: {…}, 5: {…}, 6: {…}, 7: {…}, …}
+  ```
 
-#### _Example 1: Fetch items and index by `item_type`_
+#### _Example index by `slug`:_
+```javascript
+{
+    "ground": {id: 1, object: "radical", data: {slug: "ground", ... }, ...},
+    "fins": {id: 2, object: "radical", data: {slug: "fins", ... }, ...},
+    "drop": {id: 3, object: "radical", data: {slug: "drop", ... }, ...},
+    ...
+    "円": [
+        {id: 472, object: "kanji", data: {slug: "円", ... }, ...},
+        {id: 2499, object: "vocabulary", data: {slug: "円", ... }, ...},
+    ],
+    ...
+}
+```
+
+#### _Example 1: Fetch items and index by `item_type` and `slug`_
 ```javascript
 // Include the ItemData module, and wait for it to be ready.
 wkof.include('ItemData');
@@ -626,7 +665,7 @@ function fetch_items() {
 }
 
 function process_items(items) {
-    // Create an index by item type.
+    // Index the 'items' array by item_type.
     var type_index = wkof.ItemData.get_index(items, 'item_type');
     var rad = type_index['radical'];
     var kan = type_index['kanji'];
@@ -636,9 +675,14 @@ function process_items(items) {
         kan.length + ' kanji, and '+
         voc.length + ' vocabulary.'
     );
+
+    // Index the 'voc' array by slug.
+    var voc_by_name = wkof.ItemData.get_index(voc, 'slug');
+    console.log('大きい is on WK Level ' + voc_by_name['大きい'].data.level)
 }
 
 // Output:  Found 478 radicals, 2027 kanji, and 6287 vocabulary.
+// Output:  大きい is on WK Level 1
 ```
 
 -----
