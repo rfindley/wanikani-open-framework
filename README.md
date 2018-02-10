@@ -53,6 +53,12 @@ The framework is structured as follows:
 
 # <a id="installation">Installation</a>
 
+> **_[Note: While the framework is still in prototype, you can update the modules by deleting them from `file_cache` via a pattern-match for 'github' URLs:_**
+> 
+> ```javascript
+> wkof.file_cache.delete(/github/);
+> ```
+
 The core script must be installed in a script-hosting browser plugin, such as TamperMonkey.
 
 1. Install your desired script host (such as TamperMonkey).  Your chosen script host must support the ability to specify the run-order of scripts.
