@@ -1381,3 +1381,8 @@ html #wkof_ds .ui-button.ui-state-disabled:active {
 #wkof_ds .wkof_settings .note.error {font-size:.8em;color:#ff0000;font-style:italic;margin-top: 2px;}
 #wkof_ds .wkof_settings.narrow .note {padding-left:0px;}
 
+/* Open Framework: Progress Bar*/
+#wkof_ds #wkof_progbar_dlg label {margin-bottom:1px;}
+#wkof_ds #wkof_progbar_dlg .wkof_progbar {font-size:.4em;border:1px solid black;margin-bottom:6px;}
+#wkof_ds #wkof_progbar_dlg .wkof_progbar .ui-progressbar-value {background-image:linear-gradient(0deg, #faac05, #fdde9b)}
+
