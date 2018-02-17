@@ -32,6 +32,7 @@ _[Disclaimer: This project is currently in early development, so changes are exp
     - [`get_index()`](#itemdata_get_index)
   - [Apiv2](#apiv2_module)
   - [Menu](#menu_module)
+  - [Progress](#progress_module)
   - [Settings](#settings_module)
 
 -----
@@ -692,6 +693,10 @@ function process_items(items) {
 -----
 
 ## <a id="menu_module">Menu module</a>
+
+-----
+
+## <a id="progress_module">Progress module</a>
 
 -----
 
