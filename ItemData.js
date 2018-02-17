@@ -22,7 +22,6 @@
 		get_items: get_items,
 		get_index: get_index,
 	};
-
 	//########################################################################
 
 	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}

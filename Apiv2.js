@@ -19,8 +19,8 @@
 		get_endpoint: get_endpoint,     // Scripts can signal which API endpoints they need
 		is_valid_apikey_format: is_valid_apikey_format, // Check if string is a valid API key
 	};
-
 	//########################################################################
+
 	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 
 	var available_endpoints = [
@@ -113,6 +113,7 @@
 	//------------------------------
 	function fetch_endpoint(endpoint, options) {
 		var retry_cnt, endpoint_data, url, headers;
+		var progress_data = {name:'wk_api_'+endpoint, label:'Wanikani '+endpoint, value:0, max:100};
 		var bad_key_cnt = 0;
 
 		// Parse options.
@@ -154,6 +155,7 @@
 
 		//============
 		function setup_and_fetch() {
+			wkof.Progress.update(progress_data);
 			headers = {
 			//	'Wanikani-Revision': '20170710', // Placeholder?
 				'Authorization': 'Bearer '+wkof.Apiv2.key,
@@ -217,6 +219,9 @@
 				// Call the 'progress' callback.
 				if (typeof progress_callback === 'function')
 					progress_callback(endpoint, first_new, so_far, total);
+				progress_data.value = so_far;
+				progress_data.max = total;
+				wkof.Progress.update(progress_data);
 
 				// If there are more pages, fetch the next one.
 				if (json.pages.next_url !== null) {
@@ -233,6 +238,9 @@
 				// Single-page result.  Report single-page progress, and return data.
 				if (typeof progress_callback === 'function')
 					progress_callback(endpoint, 0, 1, 1);
+				progress_data.value = 1;
+				progress_data.max = 1;
+				wkof.Progress.update(progress_data);
 				fetch_promise.resolve(json);
 			}
 		}
@@ -452,7 +460,8 @@
 	//------------------------------
 	// Do initialization once document is loaded.
 	//------------------------------
-	wkof.ready('document').then(startup);
+	wkof.include('Progress');
+	wkof.ready('document,Progress').then(startup);
 	function startup() {
 		validate_user_cache()
 		.then(notify_ready);

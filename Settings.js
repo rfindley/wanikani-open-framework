@@ -131,7 +131,6 @@
 	function open(context) {
 		if (!ready) return;
 		if ($('#wkofs_'+context.script_id).length > 0) return;
-		var container = $('.footer-adjustment>.container,.dashboard>.container').eq(0);
 		var dialog = $('<div id="wkofs_'+context.script_id+'" class="wkof_settings" style="display:none;"></div>');
 		dialog.html(config_to_html(context));
 		revert_settings = {};
@@ -297,11 +296,9 @@
 	//------------------------------
 	// Load jquery UI and the appropriate CSS based on location.
 	//------------------------------
-	var css_info;
-	if (location.hostname.match(/^(www\.)*wanikani\.com$/) !== null)
+	var css_url;
+	if (location.hostname.match(/^(www\.)?wanikani\.com$/) !== null)
 		css_url = 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/jqui-wkmain.css';
-	else if (location.hostname.match(/^community\.wanikani\.com$/) !== null)
-		css_url = 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/jqui-wkforum.css';
 
 	Promise.all([
 		wkof.load_script('https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js', true /* cache */),

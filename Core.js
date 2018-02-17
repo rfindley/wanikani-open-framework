@@ -4,7 +4,6 @@
 // @description Framework for writing scripts for Wanikani
 // @version     1.00
 // @include     https://www.wanikani.com/*
-// @exclude     https://www.wanikani.com/login
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // @run-at      document-start
@@ -25,6 +24,7 @@
 		Apiv2:    { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Apiv2.js'},
 		ItemData: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/ItemData.js'},
 		Menu:     { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Menu.js'},
+		Progress: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Progress.js'},
 		Settings: { url: 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/master/Settings.js'},
 	};
 
@@ -142,6 +142,8 @@
 	//------------------------------
 	function load_file(url, use_cache) {
 		var fetch_promise = promise();
+		var no_cache = split_list(localStorage.getItem('wkof.load_file.nocache') || '');
+		if (no_cache.indexOf(url) >= 0) use_cache = false;
 		if (use_cache === true) {
 			return file_cache_load(url, use_cache).catch(fetch_url);
 		} else {
