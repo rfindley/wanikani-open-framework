@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Progress module
 // @namespace   rfindley
 // @description Progress module for Wanikani Open Framework
-// @version     1.0.0
+// @version     1.0.2
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -19,7 +19,7 @@
 	//########################################################################
 
 	var popup_delay = 1000; // Delay before popup will open (in milliseconds).
-	var popup_delay_started = false, popup_delay_expired = false;
+	var popup_delay_started = false, popup_delay_expired = false, popup_timer;
 	var externals_requested = false, externals_loaded = false;
 	var progress_bars = {};
 	var user_closed = false;
@@ -31,7 +31,7 @@
 	function update_progress(data) {
 		if (data) update_data(data);
 
-		if (!dialog_visible && !have_pending()) shutdown();
+		if (!dialog_visible && !have_pending()) return shutdown();
 
 		// We have something pending, but don't show dialog until popup_delay has passed.
 		if (!popup_delay_started) return start_popup_delay();
@@ -96,6 +96,7 @@
 			return;
 		}
 		if (!externals_loaded) return;
+		if (user_closed) return;
 
 		if (!dialog_visible) {
 			dialog_visible = true;
@@ -139,6 +140,8 @@
 
 	function dialog_close() {
 		dialog.dialog('destroy');
+		dialog_visible = false;
+		user_closed = true;
 	}
 
 	//------------------------------
@@ -167,19 +170,15 @@
 	// Shut down the dialog box and cancel the popup delay timer.
 	//------------------------------
 	function shutdown() {
-		// Reset all flags
-		user_closed = false;
-
 		// If popup timer was pending, cancel it.
-		if (popup_delay_started && !popup_delay_expired) clearTimeout(popup_timer);
+		if (popup_delay_started && !popup_delay_expired)
+			clearTimeout(popup_timer);
 		popup_delay_started = false;
 		popup_delay_expired = false;
 
 		// If progress dialog is open, close it.
-		if (dialog_visible) {
-			dialog.dialog('close');
-			dialog_visible = false;
-		}
+		if (dialog_visible) dialog.dialog('close');
+		user_closed = false;
 		progress_bars = {};
 	}
 
