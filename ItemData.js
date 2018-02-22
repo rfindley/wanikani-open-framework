@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.0
+// @version     1.0.1
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -30,7 +30,7 @@
 	//------------------------------
 	// Get the items specified by the configuration.
 	//------------------------------
-	function get_items(config) {
+	function get_items(config, global_options) {
 		// Default to WK 'subjects' only.
 		if (!config) config = {wk_items:{}};
 
@@ -54,7 +54,7 @@
 				continue;
 			}
 			remaining++;
-			spec.fetcher(cfg)
+			spec.fetcher(cfg, global_options)
 			.then(function(data){
 				if (typeof spec === 'object')
 					data = apply_filters(data, cfg, spec);
@@ -62,7 +62,8 @@
 				remaining--;
 				if (!remaining) fetch_promise.resolve(items);
 			})
-			.catch(function(){
+			.catch(function(e){
+				if (e) throw e;
 				console.log('wkof.ItemData.get_items() - Failed for config "'+cfg_name+'"');
 				remaining--;
 				if (!remaining) fetch_promise.resolve(items);
@@ -127,6 +128,7 @@
 				filter_cfg = {value:filter_cfg};
 			var filter_value = filter_cfg.value;
 			var filter_spec = spec.filters[filter_name];
+			if (filter_spec === undefined) throw new Error('wkof.ItemData.get_item() - Invalid filter "'+filter_name+'"');
 			if (typeof filter_spec.filter_func !== 'function' ||
 				(typeof filter_spec.option_req === 'function' && filter_spec.option_req(options) !== true))
 				continue;
