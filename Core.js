@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.1
+// @version     1.0.2
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
