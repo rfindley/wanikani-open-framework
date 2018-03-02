@@ -14,10 +14,10 @@
 	// Published interface.
 	//------------------------------
 	global.wkof.Apiv2 = {
-		clear_cache: clear_cache,       // Clear the user cache
-		fetch_endpoint: fetch_endpoint, // Fetch a complete API endpoint, including pagination
-		get_endpoint: get_endpoint,     // Scripts can signal which API endpoints they need
-		is_valid_apikey_format: is_valid_apikey_format, // Check if string is a valid API key
+		clear_cache: clear_cache,
+		fetch_endpoint: fetch_endpoint,
+		get_endpoint: get_endpoint,
+		is_valid_apikey_format: is_valid_apikey_format,
 	};
 	//########################################################################
 
@@ -193,7 +193,14 @@
 			if (this.status === 401) return bad_apikey();
 
 			// Check of 'no updates'.
-			if (this.status >= 300) return fetch_promise.reject({status:this.status, url:url});
+			if (this.status >= 300) {
+				if (typeof progress_callback === 'function')
+					progress_callback(endpoint, 0, 1, 1);
+				progress_data.value = 1;
+				progress_data.max = 1;
+				wkof.Progress.update(progress_data);
+				return fetch_promise.reject({status:this.status, url:url});
+			}
 
 			// Process the response data.
 			var json = JSON.parse(event.target.response);

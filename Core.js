@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.2
+// @version     1.0.3
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -14,14 +14,11 @@
 	'use strict';
 
 	//########################################################################
-	var wkof_version = '01.00';
-
 	//------------------------------
 	// Supported Modules
 	//------------------------------
 	var supported_modules = {
-		'[version]': wkof_version,
-		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=252065'},
+		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=255508'},
 		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=253281'},
 		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=252062'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=252073'},
@@ -33,27 +30,27 @@
 	// Published interface
 	//------------------------------
 	var published_interface = {
-		include: include,            // include(module_list)        => Promise
-		ready:   ready,              // ready(module_list)          => Promise
+		include: include,              // include(module_list)        => Promise
+		ready:   ready,                // ready(module_list)          => Promise
 
-		load_file:   load_file,      // load_file(url, use_cache)   => Promise
-		load_css:    load_css,       // load_css(url, use_cache)    => Promise
-		load_script: load_script,    // load_script(url, use_cache) => Promise
+		load_file:   load_file,        // load_file(url, use_cache)   => Promise
+		load_css:    load_css,         // load_css(url, use_cache)    => Promise
+		load_script: load_script,      // load_script(url, use_cache) => Promise
 
 		file_cache: {
-			dir: {},
-			clear: file_cache_clear,   // clear()                   => Promise
-			delete: file_cache_delete, // delete(name)              => Promise
-			load:  file_cache_load,    // load(name)                => Promise
-			save:  file_cache_save     // save(name, content)       => Promise
+			dir:    {},                // Object containing directory of files.
+			clear:  file_cache_clear,  // clear()             => Promise
+			delete: file_cache_delete, // delete(name)        => Promise
+			load:   file_cache_load,   // load(name)          => Promise
+			save:   file_cache_save    // save(name, content) => Promise
 		},
 
-		on:      wait_event,         // on(event, callback)         => Promise
-		trigger: trigger_event,      // trigger(event[, data1[, data2[, ...]]])
+		on:      wait_event,           // on(event, callback) => Promise
+		trigger: trigger_event,        // trigger(event[, data1[, data2[, ...]]])
 
-		get_state: get_state,        // get(state_var)
-		set_state: set_state,        // set(state_var, value)
-		wait_state: wait_state,      // wait(state_var, value[, callback[, persistent]]) => if no callback, return one-shot Promise
+		get_state:  get_state,         // get(state_var)
+		set_state:  set_state,         // set(state_var, value)
+		wait_state: wait_state         // wait(state_var, value[, callback[, persistent]]) => if no callback, return one-shot Promise
 	};
 
 	//########################################################################
