@@ -1371,7 +1371,6 @@ html #wkof_ds .ui-button.ui-state-disabled:active {
 #wkof_ds .wkof_settings .ui-tabs .ui-tabs-nav li.ui-tabs-active {
 	background-color:#fcfcfc;
 	border-bottom:none;
-	border-bottom:1px solid #fcfcfc;
 }
 #wkof_ds .wkof_settings input[type="color"] {padding:0 1em;}
 #wkof_ds .wkof_settings input[type="checkbox"] {vertical-align:middle;width:24px;margin-left:8px;margin-right:188px;}
