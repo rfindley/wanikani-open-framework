@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.0
+// @version     1.0.1
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -452,7 +452,7 @@
 			wkof.user = user_info.data
 			console.log('Caching user info...');
 			return wkof.file_cache.save('Apiv2.user', user_info);
-		})
+		});
 	}
 
 	//------------------------------

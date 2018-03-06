@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.0
+// @version     1.0.1
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -20,6 +20,7 @@
 			self: this,
 			script_id: config.script_id,
 			title: config.title,
+			autosave: (config.autosave === true || config.autosave === undefined),
 			config: config.settings,
 		}
 
@@ -28,10 +29,16 @@
 		// Create public methods bound to context.
 		this.cancel = cancel_btn.bind(context, context);
 		this.open = open.bind(context, context);
+		this.load = load_settings.bind(context, context);
+		this.save = save_settings.bind(context, context);
 		this.on_save = config.on_save;
+		this.on_close = config.on_close;
+		this.on_cancel = config.on_cancel;
 	};
 
 	global.wkof.Settings = Settings;
+	Settings.save = save_settings;
+	Settings.load = load_settings;
 	//########################################################################
 
 	wkof.settings = {};
@@ -176,6 +183,29 @@
 	}
 
 	//------------------------------
+	// Open the settings dialog.
+	//------------------------------
+	function save_settings(context) {
+		var script_id = (typeof context === 'string' ? context : context.script_id);
+		var obj = wkof.settings[script_id];
+		if (!obj) return Promise.resolve();
+		return wkof.file_cache.save('wkof.settings.'+script_id, obj);
+	}
+
+	//------------------------------
+	// Open the settings dialog.
+	//------------------------------
+	function load_settings(context) {
+		var script_id = (typeof context === 'string' ? context : context.script_id);
+		return wkof.file_cache.load('wkof.settings.'+script_id)
+		.then(finish, finish.bind(null,{}));
+
+		function finish(content) {
+			wkof.settings[script_id] = content;
+		}
+	}
+
+	//------------------------------
 	// Save button handler.
 	//------------------------------
 	function save_btn(context) {
@@ -186,6 +216,7 @@
 			else
 				delete revert_settings[name];
 		}
+		if (context.autosave) save_settings(context);
 		if (typeof context.self.on_save === 'function') context.self.on_save(revert_settings);
 		wkof.trigger('wkof.settings.save');
 		var dialog = $('#wkofs_'+context.script_id);
@@ -199,6 +230,7 @@
 	function cancel_btn(context) {
 		var dialog = $('#wkofs_'+context.script_id);
 		dialog.dialog('close');
+		if (typeof context.self.on_cancel === 'function') context.self.on_cancel();
 	}
 
 	//------------------------------
@@ -218,6 +250,7 @@
 		}
 		delete context.keep_settings;
 		dialog.dialog('destroy');
+		if (typeof context.self.on_close === 'function') context.self.on_close();
 	}
 
 	//------------------------------
