@@ -112,8 +112,6 @@ window.sample_client = {};
 
 		// Insert some sample scripts.
 		wkof.Menu.insert_script_link({name:'appstore',title:'App Store',on_click:do_nothing});
-		wkof.Menu.insert_script_link({name:'burnmgr',submenu:'Open',title:'Burn Manager',class:'wkof',on_click:do_nothing});
-		wkof.Menu.insert_script_link({name:'dpp',submenu:'Settings',title:'Dashboard Progress Plus',class:'wkof',on_click:do_nothing});
 		wkof.Menu.insert_script_link({name:'sample_client',submenu:'Settings',title:'Sample Client',on_click:do_nothing});
 	}
 
