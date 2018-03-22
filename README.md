@@ -36,7 +36,9 @@ _[Disclaimer: This project is currently in early development, so changes are exp
     - [`clear_cache()`](#apiv2_clear_cache)
     - [`is_valid_apikey_format()`](#apiv2_is_valid_apikey_format)
   - [Menu](#menu_module)
+    - [`insert_script_link()`](#menu_insert_script_link)
   - [Progress](#progress_module)
+    - [`update()`](#progress_update)
   - [Settings](#settings_module)
 
 -----
@@ -114,7 +116,12 @@ Your console may show additional contents if any framework modules are loaded.
 
 ## <a id="core_module">Core</a>
 
-We can group these contents into the following categories:
+The core module provides an interface for:
+* Loading other modules
+* Loading scripts, stylesheets, or any arbitrary file
+* Loading and saving files or objects to cache
+* Setting and waiting on state variables
+* Sending and listening for events
 
 File caching:
 * **`file_cache`** - A sub-object for caching arbitrary files and data.
@@ -732,7 +739,7 @@ However, if you need to retrieve data that changed after a specific timestamp, o
 
 #### Parameters:
 * **`endpoint_name`** - A string containing the name of the endpoint to be fetched (e.g. "summary").
-* **`options`** - _(optional)_ An object that specifies additional optional parameters. (Described in detail <a href="#fetch_endpoint_options">below</a>).
+* **`options`** - _(optional)_ An object that specifies additional optional parameters. _(see `Options` below)_
 
 #### Return value:
 * **`Promise`** - A Promise that resolves with the fetched endpoint data.
@@ -842,7 +849,7 @@ This function makes use of cache, so only recent changes will be fetched from th
 
 #### Parameters:
 * **`endpoint_name`** - A string containing the name of the endpoint to be fetched (e.g. "summary").
-* **`options`** - _(optional)_ An object that specifies additional optional parameters. (Described in detail <a href="#get_endpoint_options">below</a>).
+* **`options`** - _(optional)_ An object that specifies additional optional parameters. _(see `Options` below)_
 
 #### Return value:
 * **`Promise`** - A Promise that resolves with the fetched endpoint data.
@@ -945,9 +952,137 @@ function check_key() {
 
 ## <a id="menu_module">Menu module</a>
 
+The `Menu` module provides an interface for adding custom links to the Wanikani menu.
+
+To use the `ItemData` module, you must include it from your script, and wait until the module is ready before accessing it:
+
+```javascript
+wkof.include('Menu');
+wkof.ready('Menu').then(do_something);
+
+function do_something() {
+    // TODO:  Add your code to access the Menu interface.
+    console.log('wkof.Menu is loaded');
+}
+```
+
+-----
+
+### <a id="menu_insert_script_link">`wkof.Menu.insert_script_link(config)`</a>
+
+Retrieves a set of items, applies filters to select a subset of those items, and returns an array of the resulting items.  These items can then be indexed by specific fields using the `get_index()` function.
+
+#### Parameters:
+* **`config`** - An object describing the link to be installed.  _(see `Config` below)_
+
+#### <a id="insert_script_link_config">Config</a>
+
+The `config` object contains the following:
+* **`name`** - A unique identifier string for the link to be inserted.<br>
+The inserted `<li>` element will have `id="<name>_script_link"` and `name="<name>"`.
+* **`submenu`** - _(optional)_ A string containing the name of a submenu to (create and) insert the link under.
+* **`title`** - A string containing the text of the link.
+* **`class`** - _(optional)_ A string containing any class names to be added to the `<li>` element.
+* **`on_click`** - A callback function to be called when the link is clicked.
+
+#### _Example: Call a function when a menu link is clicked._
+```javascript
+// Include the ItemData module, and wait for it to be ready.
+wkof.include('Menu');
+wkof.ready('Menu').then(install_menu);
+
+// This function is called when the Menu module is ready to use.
+function install_menu() {
+    var config = {
+        name: 'my_script_open',
+        submenu: 'Open',
+        title: 'My Script',
+        on_click: open_my_script
+    };
+    wkof.Menu.insert_script_link(config);
+}
+
+function open_my_script(items) {
+    // TODO: Do something useful.
+    console.log('Opening "My Script"...');
+}
+
+// Output: Opening "My Script"...
+```
+
 -----
 
 ## <a id="progress_module">Progress module</a>
+
+The `Progress` module provides an pop-up dialog for displaying progress bars.
+
+To use the `Progress` module, you must include it from your script, and wait until the module is ready before accessing it:
+
+```javascript
+wkof.include('Progress');
+wkof.ready('Progress').then(do_something);
+
+function do_something() {
+    // TODO:  Add your code to access the Menu interface.
+    console.log('wkof.Progress is loaded');
+}
+```
+
+-----
+
+### <a id="progress_update">`wkof.Progress.update(progress)`</a>
+
+Initializes or updates the progress on a task.
+The progress dialog will appear if the task is not completed within 1 second.
+The dialog will close when all active tasks are complete.
+Completion occurs when a task's current `value` is equal to or greater than its `max` value.
+If more than one task is active at the same time, the dialog will show a separate progress bar for each task.
+
+#### Parameters:
+* **`progress`** - An object describing the current progress status.  _(see below)_.
+
+#### <a id="progress_update_progress">Progress</a>
+
+The `progress` object contains the following:
+* **`name`** - A unique identifier string for the progress bar.
+* **`label`** - A string containing the text to appear next to the progress bar.
+* **`value`** - The number of units currently completed.
+* **`max`** - The number of units representing 100% completion.
+
+#### _Example: Simulate 'Core10k' data loading over a 5 second period._
+```javascript
+wkof.include('Progress');
+wkof.ready('Progress').then(do_something);
+
+var progress = {
+    name: 'my_script_core10k',
+    label: 'Core10k Vocabulary',
+    value: 0,
+    max: 10000
+};
+
+function do_something() {
+    // Initialize the progress bar.
+    progress.value = 0;
+    wkof.Progress.update(progress);
+
+    // Simulate some work
+    do_some_work();
+}
+
+function do_some_work() {
+    // Simulate 250ms worth of work.
+    setTimeout(function() {
+        // Update the progress bar.
+        progress.value += 500;
+        wkof.Progress.update(progress);
+
+        // Check if we have more work
+        if (progress.value < progress.max)
+            do_some_work();
+    }, 250);
+}
+```
 
 -----
 
