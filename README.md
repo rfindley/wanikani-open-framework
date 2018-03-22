@@ -954,7 +954,7 @@ function check_key() {
 
 The `Menu` module provides an interface for adding custom links to the Wanikani menu.
 
-To use the `ItemData` module, you must include it from your script, and wait until the module is ready before accessing it:
+To use the `Menu` module, you must include it from your script, and wait until the module is ready before accessing it:
 
 ```javascript
 wkof.include('Menu');
@@ -987,7 +987,7 @@ The inserted `<li>` element will have `id="<name>_script_link"` and `name="<name
 
 #### _Example: Call a function when a menu link is clicked._
 ```javascript
-// Include the ItemData module, and wait for it to be ready.
+// Include the Menu module, and wait for it to be ready.
 wkof.include('Menu');
 wkof.ready('Menu').then(install_menu);
 
@@ -1023,7 +1023,7 @@ wkof.include('Progress');
 wkof.ready('Progress').then(do_something);
 
 function do_something() {
-    // TODO:  Add your code to access the Menu interface.
+    // TODO:  Add your code to access the Progress interface.
     console.log('wkof.Progress is loaded');
 }
 ```
