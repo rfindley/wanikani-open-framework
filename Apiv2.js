@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.1
+// @version     1.0.2
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -52,12 +52,12 @@
 	//------------------------------
 	// Clear any datapoint cache not belonging to the current user.
 	//------------------------------
-	function clear_cache() {
+	function clear_cache(include_non_user) {
 		var clear_promises = [];
 		var dir = wkof.file_cache.dir;
 		for (var idx in available_endpoints) {
 			var filename = 'Apiv2.'+available_endpoints[idx];
-			if (filename === 'Apiv2.subjects' || !dir[filename]) continue;
+			if ((filename === 'Apiv2.subjects' && include_non_user !== true) || !dir[filename]) continue;
 			clear_promises.push(filename);
 		}
 		clear_promises = clear_promises.map(delete_file);
