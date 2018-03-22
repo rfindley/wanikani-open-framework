@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.0
+// @version     1.0.1
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -30,7 +30,7 @@
 			'<li class="scripts-header nav-header">Scripts</li>'
 		);
 
-		// Click to open Settings menu.
+		// Click to open sub-menu.
 		$('.dropdown.account').on('click','.scripts-submenu>a',function(e){
 			var link = $(e.target).parent();
 			link.siblings('.scripts-submenu.open').removeClass('open');
@@ -99,11 +99,11 @@
 	}
 
 	//------------------------------
-	// Inserts script link into script settings menu.
+	// Inserts script link into Wanikani menu.
 	//------------------------------
 	function insert_script_link(config) {
 		// Abort if the script already exists
-		var link_id = config.name+'_settings_link'; 
+		var link_id = config.name+'_script_link'; 
 		if ($('#'+link_id).length !== 0) return;
 		install_scripts_header();
 		if (config.submenu) {
@@ -123,7 +123,7 @@
 
 		// Add a callback for when the link is clicked.
 		$('#'+link_id).on('click', function(e){
-			$('body').off('click.scripts-settings');
+			$('body').off('click.scripts-link');
 			$('.dropdown.account').removeClass('open');
 			$('.scripts-submenu').removeClass('open');
 			config.on_click(e);
