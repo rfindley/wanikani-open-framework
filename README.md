@@ -31,6 +31,10 @@ _[Disclaimer: This project is currently in early development, so changes are exp
         - [Inverting Filters](#get_items_invert)
     - [`get_index()`](#itemdata_get_index)
   - [Apiv2](#apiv2_module)
+    - [`fetch_endpoint()`](#apiv2_fetch_endpoint)
+    - [`get_endpoint()`](#apiv2_get_endpoint)
+    - [`clear_cache()`](#apiv2_clear_cache)
+    - [`is_valid_apikey_format()`](#apiv2_is_valid_apikey_format)
   - [Menu](#menu_module)
   - [Progress](#progress_module)
   - [Settings](#settings_module)
@@ -370,8 +374,6 @@ The `ItemData` module:
 * Provides a set of filters for selecting subsets of item data by various criteria.
 * Allows client scripts to register additional data sources (such as an external set of Core10k vocabulary).
 * Allows client scripts to register additional filters for selecting items (such as by leech score).
-
-\* Not yet implemented:
 * Provides a global 'Loading...' progress bar when fetching data.
 
 Internally, the module also:
@@ -379,7 +381,7 @@ Internally, the module also:
 * Reduces browser memory consumption by sharing item objects across all scripts.
 * Retrieves only the data requested by the user's active client scripts.
 
-To use the `ItemData` module, you must include it from your script, wait until the module is ready before accessing it:
+To use the `ItemData` module, you must include it from your script, and wait until the module is ready before accessing it:
 
 ```javascript
 wkof.include('ItemData');
@@ -689,6 +691,255 @@ function process_items(items) {
 -----
 
 ## <a id="apiv2_module">Apiv2 module</a>
+
+The `Apiv2` module:
+* Provides an interface for fetching and caching all Wanikani API endpoint data.
+* Is a low-level interface to the Wanikani API, and is used by the the higher-level ItemData module.
+* Allows you to specify any filters supported by the Wanikani API.
+* Is best for fetching the following Wanikani API endpoints (_see `ItemData` module for other endpoints_):
+  - `/user`
+  - `/summary`
+  - `/reviews`
+  - `/level_progressions`
+  - `/resets`
+* Provides a global 'Loading...' progress bar when fetching data.
+
+Internally, the module also:
+* Coordinates requests from all client scripts to prevent redundant requests to the Wanikani API.
+* Reduces browser memory consumption by sharing item objects across all scripts.
+* Retrieves only the data requested by the user's active client scripts.
+
+To use the `Apiv2` module, you must include it from your script, and wait until the module is ready before accessing it:
+
+```javascript
+wkof.include('Apiv2');
+wkof.ready('Apiv2').then(do_something);
+
+function do_something() {
+    // TODO:  Add your code to access the Apiv2 interface.
+    console.log('wkof.Apiv2 is loaded');
+}
+```
+
+-----
+
+### <a id="apiv2_fetch_endpoint">`wkof.Apiv2.fetch_endpoint(endpoint_name [, options])`</a>
+
+**\* Note: Generally, you should be using `get_endpoint()` instead.**<br>
+Retrieves the contents of a Wanikani API endpoint.
+Generally, you will want to use `get_endpoint()` instead, which makes use of cache and automatically compensates for the last fetch date.
+However, if you need to retrieve data that changed after a specific timestamp, or you need to use specific filters and don't want to use cache, `fetch_endpoint()` may be a better choice.
+
+#### Parameters:
+* **`endpoint_name`** - A string containing the name of the endpoint to be fetched (e.g. "summary").
+* **`options`** - _(optional)_ An object that specifies additional optional parameters. (Described in detail <a href="#fetch_endpoint_options">below</a>).
+
+#### Return value:
+* **`Promise`** - A Promise that resolves with the fetched endpoint data.
+
+#### <a id="fetch_endpoint_options">Options</a>
+The following optional parameters are supported inside the `options` object:
+* **`progress_callback`** - A callback function to be called as the fetch makes incremental progress.
+The progress_callback function is called with the following parameters:
+  - `endpoint_name` - A string containing the name of the endpoint.
+  - `first_new` - The index if the first element received in this progress update.
+  - `so_far` - The number of elements retrieved since the fetch began.
+  - `total` - The total number of elements that will be retrieved in this fetch.
+* **`last_update`** - A timestamp string (ISO8601 format).  Only records modified after this time will be returned.
+* **`filters`** - A sub-object containing API filters to be added to the request URL.<br>_(See Wanikani API documentation for supported filters on each endpoint)_<br>
+
+#### _Example 1: Fetch level-ups since the start of 2018:_
+```javascript
+// Include the Apiv2 module, and wait for it to be ready.
+wkof.include('Apiv2');
+wkof.ready('Apiv2').then(fetch_data);
+
+// This function is called when the Apiv2 module is ready to use.
+function fetch_data() {
+    var options = {
+        last_update: '2018-01-01T00:00:00.000000Z'
+    };
+    wkof.Apiv2.fetch_endpoint('level_progressions', options)
+    .then(process_response);
+}
+
+function process_response(response) {
+    // Show the results on the Javascript console.
+    for (var idx = 0; idx < response.data.length; idx++) {
+        var entry = response.data[idx];
+        var level = entry.data.level;
+        var pass_date = entry.data.passed_at.slice(0, 10);
+        console.log('Passed level '+level+' on '+pass_date);
+    }
+}
+
+// Output:
+//   Passed level 4 on 2018-01-17
+//   Passed level 5 on 2018-02-03
+//   Passed level 6 on 2018-02-20
+```
+
+#### _Example 2: Fetch radicals removed from Wanikani since the start of 2014:_
+```javascript
+// Include the Apiv2 module, and wait for it to be ready.
+wkof.include('Apiv2');
+wkof.ready('Apiv2').then(fetch_data);
+
+// This function is called when the Apiv2 module is ready to use.
+function fetch_data() {
+    var options = {
+        last_update: '2014-01-01T00:00:00.000000Z',
+        filters: {
+            types: ['radical'],
+            hidden: true
+        }
+    };
+    wkof.Apiv2.fetch_endpoint('subjects', options)
+    .then(process_response);
+}
+
+function process_response(response) {
+    if (response.data.length === 0) {
+        // Inject some fake data if no deleted items are currently on record.
+        response.data = [{
+            "id":59,
+            "object":"radical",
+            "url":"https://www.wanikani.com/api/v2/subjects/59",
+            "data_updated_at":"2018-03-14T00:31:56.396289Z",
+            "data":{
+                "level":3,
+                "created_at":"2012-03-01T01:52:13.000000Z",
+                "slug":"raptor-cage",
+                "hidden_at":"2018-03-14T00:31:56.396289Z",
+                "document_url":"https://www.wanikani.com/radicals/raptor-cage",
+                "characters":"久",
+                "character_images":[],
+                "meanings":[{"meaning":"Raptor Cage","primary":true}]
+            }
+        }];
+    }
+
+    // Show the results on the Javascript console.
+    for (var idx = 0; idx < response.data.length; idx++) {
+        var entry = response.data[idx];
+        var slug = entry.data.slug;
+        var hide_date = entry.data.hidden_at.slice(0, 10);
+        console.log('Radical "'+slug+'" was removed on '+hide_date);
+    }
+}
+
+// Output (using injected fake data):
+//   Radical "raptor-cage" was removed on 2018-03-14
+```
+
+-----
+
+### <a id="apiv2_get_endpoint">`wkof.Apiv2.get_endpoint(endpoint_name [, options])`</a>
+
+**\* Note: For item-related endpoints, please see the `ItemData` module.**<br>
+Retrieves the contents of a Wanikani API endpoint.
+This function makes use of cache, so only recent changes will be fetched from the server.
+
+#### Parameters:
+* **`endpoint_name`** - A string containing the name of the endpoint to be fetched (e.g. "summary").
+* **`options`** - _(optional)_ An object that specifies additional optional parameters. (Described in detail <a href="#get_endpoint_options">below</a>).
+
+#### Return value:
+* **`Promise`** - A Promise that resolves with the fetched endpoint data.
+
+#### <a id="get_endpoint_options">Options</a>
+The following optional parameters are supported inside the `options` object:
+* **`progress_callback`** - A callback function to be called as the fetch makes incremental progress.
+The progress_callback function is called with the following parameters:
+  - `endpoint_name` - A string containing the name of the endpoint.
+  - `first_new` - The index if the first element received in this progress update.
+  - `so_far` - The number of elements retrieved since the fetch began.
+  - `total` - The total number of elements that will be retrieved in this fetch.
+* **`force_update`** - By default, `get_endpoint()` will not seek an update from the server if the last update was less than 1 minute ago.  If this flag is `true`, an update is requested every time.
+
+#### _Example: Get the number of lessons and review currently available:_
+```javascript
+// Include the Apiv2 module, and wait for it to be ready.
+wkof.include('Apiv2');
+wkof.ready('Apiv2').then(get_data);
+
+// This function is called when the Apiv2 module is ready to use.
+function get_data() {
+    var options = {
+        force_update: true
+    };
+    wkof.Apiv2.get_endpoint('summary', options)
+    .then(process_response);
+}
+
+function process_response(response) {
+    // Show the results on the Javascript console.
+    var lessons = response.lessons;
+    var num_items = lessons[0].subject_ids.length;
+    console.log(num_items+' lessons available');
+
+    var reviews = response.reviews;
+    var num_items = reviews[0].subject_ids.length;
+    console.log(num_items+' reviews available');
+}
+
+// Output:
+//   9 lessons available
+//   67 reviews available
+```
+
+-----
+
+### <a id="apiv2_clear_cache">`wkof.Apiv2.clear_cache([include_non_user])`</a>
+
+Clears all cached user-specific API data, i.e. everything except the `subjects` endpoint.
+
+#### Parameters:
+* **`include_non_user`** - _(optional)_ If `true`, also clear all non-user-specific data.
+
+#### Return value:
+* **`Promise`** - A Promise that resolves when the cache is cleared.
+
+#### _Example: Clear all user-specific API data:_
+```javascript
+// Include the Apiv2 module, and wait for it to be ready.
+wkof.include('Apiv2');
+wkof.ready('Apiv2').then(clear_cache);
+
+// This function is called when the Apiv2 module is ready to use.
+function clear_cache() {
+    wkof.Apiv2.clear_cache();
+}
+```
+
+-----
+
+### <a id="apiv2_is_valid_apikey_format">`wkof.Apiv2.apiv2_is_valid_apikey_format(apikey)`</a>
+
+Checks whether the specified string is a valid APIv2 string format.
+
+#### Parameters:
+* **`apikey`** - A string containing an APIv2 key that is to be checked for proper format.
+
+#### Return value:
+* **`boolean`** - `true` if the apikey is a valid APIv2 format, otherwise `false`.
+
+#### _Example: Clear all user-specific API data:_
+```javascript
+// Include the Apiv2 module, and wait for it to be ready.
+wkof.include('Apiv2');
+wkof.ready('Apiv2').then(check_key);
+
+// This function is called when the Apiv2 module is ready to use.
+function check_key() {
+    var apikey = '12345678-1234-1234-1234-123456789abc';
+    var is_valid = wkof.Apiv2.is_valid_apikey_format(apikey);
+    var valid_string = (is_valid ? 'is' : 'is not');
+    console.log('Apikey "'+apikey+'" '+valid_string+' correctly formatted.');
+}
+
+// Output: Apikey "12345678-1234-1234-1234-123456789abc" is correctly formatted.
+```
 
 -----
 
