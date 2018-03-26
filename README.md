@@ -404,7 +404,14 @@ function do_something() {
 
 ### <a id="itemdata_get_items">`wkof.ItemData.get_items([config])`</a>
 
-Retrieves a set of items, applies filters to select a subset of those items, and returns an array of the resulting items.  These items can then be indexed by specific fields using the `get_index()` function.
+Retrieves a set of items from the Wanikani API.  A subset of items can be selected using optional filters.  The results can then be indexed by specific fields using the `get_index()` function.
+
+When considering how to retrieve API data, you should follow these guidelines:
+* Use `wkof.ItemData.get_items()` when fetching **one or more endpoints** from `/subjects`, `/assignments`, `/review_statistics`, or `/study_materials` endpoints.  The results are **cached**, and are automatically **cross-linked** against the `/subjects` endpoint.  You can also specify a set of filters if you only want to retrieve a subset of the data, and then optionally index the results using the `wkof.ItemData.get_index()` function.  In general, `wkof.ItemData.get_items()` is the most efficient way of working with item data.
+
+* Use `wkof.Apiv2.get_endpoint()` when fetching a single endpoint, but **only if you want to fetch the entire endpoint and cache the result**.  For example, it's probably not a good idea to use this function to fetch the `/reviews` endpoint since it can contain hundreds of thousands of records.  In such cases, use `wkof.Apiv2.fetch_endpoint()` with an appropriate time range filter instead.
+
+* Use `wkof.Apiv2.fetch_endpoint()` when fetching a subset of data from a single endpoint using one or more of the Wanikani API's built-in filters.
 
 #### Parameters:
 * **`config`** - _(optional)_ A string or object that specifies the data sources and filters to be used in fetching the desired items.  (Described in detail <a href="#get_items_config">below</a>).
@@ -732,10 +739,14 @@ function do_something() {
 
 ### <a id="apiv2_fetch_endpoint">`wkof.Apiv2.fetch_endpoint(endpoint_name [, options])`</a>
 
-**\* Note: Generally, you should be using `get_endpoint()` instead.**<br>
 Retrieves the contents of a Wanikani API endpoint.
-Generally, you will want to use `get_endpoint()` instead, which makes use of cache and automatically compensates for the last fetch date.
-However, if you need to retrieve data that changed after a specific timestamp, or you need to use specific filters and don't want to use cache, `fetch_endpoint()` may be a better choice.
+
+When considering how to retrieve API data, you should follow these guidelines:
+* Use `wkof.ItemData.get_items()` when fetching **one or more endpoints** from `/subjects`, `/assignments`, `/review_statistics`, or `/study_materials` endpoints.  The results are **cached**, and are automatically **cross-linked** against the `/subjects` endpoint.  You can also specify a set of filters if you only want to retrieve a subset of the data, and then optionally index the results using the `wkof.ItemData.get_index()` function.  In general, `wkof.ItemData.get_items()` is the most efficient way of working with item data.
+
+* Use `wkof.Apiv2.get_endpoint()` when fetching a single endpoint, but **only if you want to fetch the entire endpoint and cache the result**.  For example, it's probably not a good idea to use this function to fetch the `/reviews` endpoint since it can contain hundreds of thousands of records.  In such cases, use `wkof.Apiv2.fetch_endpoint()` with an appropriate time range filter instead.
+
+* Use `wkof.Apiv2.fetch_endpoint()` when fetching a subset of data from a single endpoint using one or more of the Wanikani API's built-in filters.
 
 #### Parameters:
 * **`endpoint_name`** - A string containing the name of the endpoint to be fetched (e.g. "summary").
@@ -752,7 +763,7 @@ The progress_callback function is called with the following parameters:
   - `first_new` - The index if the first element received in this progress update.
   - `so_far` - The number of elements retrieved since the fetch began.
   - `total` - The total number of elements that will be retrieved in this fetch.
-* **`last_update`** - A timestamp string (ISO8601 format).  Only records modified after this time will be returned.
+* **`last_update`** - A Date object, or any string accepted by `new Date(string)`.  Only records modified after this time will be returned.  This value will supercede any `updated_after` filter in the `filters` option.
 * **`filters`** - A sub-object containing API filters to be added to the request URL.<br>_(See Wanikani API documentation for supported filters on each endpoint)_<br>
 
 #### _Example 1: Fetch level-ups since the start of 2018:_
@@ -764,7 +775,7 @@ wkof.ready('Apiv2').then(fetch_data);
 // This function is called when the Apiv2 module is ready to use.
 function fetch_data() {
     var options = {
-        last_update: '2018-01-01T00:00:00.000000Z'
+        last_update: 'Jan 1, 2018'; // Any date format accepted by "new Date(string)"
     };
     wkof.Apiv2.fetch_endpoint('level_progressions', options)
     .then(process_response);
@@ -843,9 +854,14 @@ function process_response(response) {
 
 ### <a id="apiv2_get_endpoint">`wkof.Apiv2.get_endpoint(endpoint_name [, options])`</a>
 
-**\* Note: For item-related endpoints, please see the `ItemData` module.**<br>
 Retrieves the contents of a Wanikani API endpoint.
-This function makes use of cache, so only recent changes will be fetched from the server.
+
+When considering how to retrieve API data, you should follow these guidelines:
+* Use `wkof.ItemData.get_items()` when fetching **one or more endpoints** from `/subjects`, `/assignments`, `/review_statistics`, or `/study_materials` endpoints.  The results are **cached**, and are automatically **cross-linked** against the `/subjects` endpoint.  You can also specify a set of filters if you only want to retrieve a subset of the data, and then optionally index the results using the `wkof.ItemData.get_index()` function.  In general, `wkof.ItemData.get_items()` is the most efficient way of working with item data.
+
+* Use `wkof.Apiv2.get_endpoint()` when fetching a single endpoint, but **only if you want to fetch the entire endpoint and cache the result**.  For example, it's probably not a good idea to use this function to fetch the `/reviews` endpoint since it can contain hundreds of thousands of records.  In such cases, use `wkof.Apiv2.fetch_endpoint()` with an appropriate time range filter instead.
+
+* Use `wkof.Apiv2.fetch_endpoint()` when fetching a subset of data from a single endpoint using one or more of the Wanikani API's built-in filters.
 
 #### Parameters:
 * **`endpoint_name`** - A string containing the name of the endpoint to be fetched (e.g. "summary").
