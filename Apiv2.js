@@ -125,13 +125,20 @@
 		// Get timestamp of last fetch from options (if specified)
 		var last_update = options.last_update;
 
-		// If no prior fetch, set last_update to ancient date.
-		if (typeof last_update !== 'string') {
+		// If no prior fetch... (i.e. no valid last_update)
+		if (typeof last_update !== 'string' && !(last_update instanceof Date)) {
+			// If updated_after is present, use it.  Otherwise, default to ancient date.
 			if (filters.updated_after === undefined)
 				last_update = '1999-01-01T01:00:00.000000Z';
 			else
 				last_update = filters.updated_after;
 		}
+		// If last_update is a Date object, convert it to ISO string.
+		// If it's a string, but not an ISO string, try converting to an ISO string.
+		if (last_update instanceof Date)
+			last_update = last_update.toISOString().replace(/Z$/,'000Z');
+		else if (last_update.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/) === null)
+			last_update = new Date(last_update).toISOString().replace(/Z$/,'000Z');
 
 		// Set up URL and headers
 		url = "https://www.wanikani.com/api/v2/" + endpoint;
