@@ -27,7 +27,7 @@ window.sample_client = {};
 	wkof.ready(modules).then(startup);
 
 	//-----------------------------------
-	// Local variables
+	// Script-global variables
 	//-----------------------------------
 	var settings_dialog;
 
@@ -50,12 +50,13 @@ window.sample_client = {};
 		settings_dialog = new wkof.Settings({
 			script_id: 'settings_demo',
 			title: 'Settings Demo',
+			pre_open: dialog_preopen,
 			on_save: dialog_save,
 			on_cancel: dialog_cancel,
 			on_close: dialog_close,
 			settings: {
 				'grp_presets': {type:'group',label:'Presets',content:{
-					'presets': {type:'list',content:{}},
+					'presets': {type:'list',refresh_on_change:true,content:{}},
 				}},
 				'grp_group': {type:'group',label:'Group',content:{
 					'section': {type:'section',label:'Section'},
@@ -71,6 +72,13 @@ window.sample_client = {};
 				}},
 			}
 		});
+		settings_dialog.load();
+	}
+
+	//-----------------------------------
+	// Called just before the dialog box is opened.
+	//-----------------------------------
+	function dialog_preopen() {
 	}
 
 	//-----------------------------------

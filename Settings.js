@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.2
+// @version     1.0.3
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -53,33 +53,41 @@
 		if (base === undefined) wkof.settings[context.cfg.script_id] = base = {};
 
 		var html = '', item, child_passback = {};
+		var id = context.cfg.script_id+'_dialog';
 		for (var name in context.cfg.settings) {
 			var item = context.cfg.settings[name];
 			html += parse_item(name, context.cfg.settings[name], child_passback);
 		}
 		if (child_passback.tabs)
-			html = assemble_pages(child_passback.tabs, child_passback.pages) + html;
+			html = assemble_pages(id, child_passback.tabs, child_passback.pages) + html;
 		return '<form>'+html+'</form>';
 
 		//============
 		function parse_item(name, item, passback) {
 			if (typeof item.type !== 'string') return '';
 			var id = context.cfg.script_id+'_'+name;
-			var cname, html = '', value, child_passback;
+			var cname, html = '', value, child_passback, non_page = '';
 			switch (item.type) {
+				case 'tabset':
+					child_passback = {};
+					for (cname in item.content) 
+						non_page += parse_item(cname, item.content[cname], child_passback);
+					if (child_passback.tabs)
+						html = assemble_pages(id, child_passback.tabs, child_passback.pages);
+					break;
+
 				case 'page':
 					if (typeof item.content !== 'object') item.content = {};
 					if (!passback.tabs) {
 						passback.tabs = [];
 						passback.pages = [];
 					}
-					passback.tabs.push('<li id="'+id+'_tab"><a href="#'+id+'">'+item.label+'</a></li>');
+					passback.tabs.push('<li id="'+id+'_tab"'+to_title(item.hover_tip)+'><a href="#'+id+'">'+item.label+'</a></li>');
 					child_passback = {};
-					var non_page = '';
 					for (cname in item.content) 
 						non_page += parse_item(cname, item.content[cname], child_passback);
 					if (child_passback.tabs)
-						html = assemble_pages(child_passback.tabs, child_passback.pages);
+						html = assemble_pages(id, child_passback.tabs, child_passback.pages);
 					passback.pages.push('<div id="'+id+'">'+html+non_page+'</div>');
 					passback.is_page = true;
 					html = '';
@@ -87,9 +95,12 @@
 
 				case 'group':
 					if (typeof item.content !== 'object') item.content = {};
+					child_passback = {};
 					for (cname in item.content) 
-						html += parse_item(cname, item.content[cname]);
-					html = '<fieldset id="'+id+'" class="wkof_group"><legend>'+item.label+'</legend>'+html+'</fieldset>';
+						non_page += parse_item(cname, item.content[cname], child_passback);
+					if (child_passback.tabs)
+						html = assemble_pages(id, child_passback.tabs, child_passback.pages);
+					html = '<fieldset id="'+id+'" class="wkof_group"><legend>'+item.label+'</legend>'+html+non_page+'</fieldset>';
 					break;
 
 				case 'dropdown':
@@ -117,12 +128,12 @@
 						attribs += ' size="'+(item.size || Object.keys(item.content).length || 4)+'"';
 						if (item.multi === true) attribs += ' multiple';
 					}
-					html = '<select id="'+id+'" name="'+name+'" class="'+classes+'"'+attribs+'>';
+					html = '<select id="'+id+'" name="'+name+'" class="'+classes+'"'+attribs+to_title(item.hover_tip)+'>';
 					for (cname in item.content)
 						html += '<option name="'+cname+'">'+escape(item.content[cname])+'</option>';
 					html += '</select>';
 					html = make_label(item) + wrap_right(html);
-					html = wrap_row(html, item.full_width);
+					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
 				case 'checkbox':
@@ -134,7 +145,7 @@
 						set_value(context, base, name, value);
 					}
 					html += wrap_right('<input id="'+id+'" class="setting" type="checkbox" name="'+name+'">');
-					html = wrap_row(html, item.full_width);
+					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
 				case 'input':
@@ -150,8 +161,8 @@
 						value = (item.default || (is_number==='number'?'0':''));
 						set_value(context, base, name, value);
 					}
-					html += wrap_right('<input id="'+id+'" class="setting" type="'+itype+'" name="'+name+'">');
-					html = wrap_row(html, item.full_width);
+					html += wrap_right('<input id="'+id+'" class="setting" type="'+itype+'" name="'+name+'"'+(item.placeholder?' placeholder="'+escape(item.placeholder)+'"':'')+'>');
+					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
 				case 'color':
@@ -163,7 +174,7 @@
 						set_value(context, base, name, value);
 					}
 					html += wrap_right('<input id="'+id+'" class="setting" type="color" name="'+name+'">');
-					html = wrap_row(html, item.full_width);
+					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
 				case 'divider':
@@ -178,7 +189,7 @@
 					html += make_label(item);
 					html += item.html;
 					switch (item.wrapper) {
-						case 'row': html = wrap_row(html); break;
+						case 'row': html = wrap_row(html, null, item.hover_tip); break;
 						case 'left': html = wrap_left(html); break;
 						case 'right': html = wrap_right(html); break;
 					}
@@ -193,11 +204,12 @@
 		}
 
 		//============
-		function assemble_pages(tabs, pages) {return '<div class="wkof_stabs"><ul>'+tabs.join('')+'</ul>'+pages.join('')+'</div>';}
-		function wrap_row(html,full) {return '<div class="row'+(full?' full':'')+'">'+html+'</div>';}
+		function assemble_pages(id, tabs, pages) {return '<div id="'+id+'" class="wkof_stabs"><ul>'+tabs.join('')+'</ul>'+pages.join('')+'</div>';}
+		function wrap_row(html,full,hover_tip) {return '<div class="row'+(full?' full':'')+'"'+to_title(hover_tip)+'>'+html+'</div>';}
 		function wrap_left(html) {return '<div class="left">'+html+'</div>';}
 		function wrap_right(html) {return '<div class="right">'+html+'</div>';}
-		function escape(text) {return text.replace('<','&lt;').replace('>','&gt;');}
+		function escape(text) {return text.replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+		function to_title(tip) {if (!tip) return ''; return ' title="'+tip.replace(/"/g,'&quot;')+'"';}
 	}
 
 	//------------------------------
@@ -358,6 +370,7 @@
 					break;
 			}
 		}
+		if (typeof context.cfg.on_refresh === 'function') context.cfg.on_refresh(wkof.settings[context.cfg.script_id]);
 	}
 
 	//------------------------------
@@ -529,7 +542,7 @@
 	//------------------------------
 	var css_url;
 	if (location.hostname.match(/^(www\.)?wanikani\.com$/) !== null)
-		css_url = 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/4ee8084163ffcf61d7a1009a655f7905ed145324/jqui-wkmain.css';
+		css_url = 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/0017ff1257f2fae9823ac0fccdc6874315a8d039/jqui-wkmain.css';
 
 	Promise.all([
 		wkof.load_script('https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js', true /* cache */),
