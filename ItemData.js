@@ -83,6 +83,13 @@
 
 		// Endpoints that we can fetch (subjects MUST BE FIRST!!)
 		var available_endpoints = ['subjects','assignments','review_statistics','study_materials'];
+		var spec = wkof.ItemData.registry.sources.wk_items;
+		for (var filter_name in config.filters) {
+			var filter_spec = spec.filters[filter_name];
+			if (!filter_spec || typeof filter_spec.set_options !== 'function') continue;
+			var filter_cfg = config.filters[filter_name];
+			filter_spec.set_options(options, filter_cfg.value);
+		}
 
 		// Fetch all of the endpoints
 		var ep_promises = [];
@@ -174,56 +181,64 @@
 	// Register wk_items data source.
 	//------------------------------
 	wkof.ItemData.registry.sources['wk_items'] = {
-		description: 'Wanikani Item Data',
+		description: 'Wanikani',
 		fetcher: get_wk_items,
 		options: {
 			assignments: {
 				type: 'checkbox',
-				label: 'SRS status, burn status, progress dates',
-				default: false
+				label: 'Assignments',
+				default: false,
+				hover_tip: 'Include the "/assignments" endpoint (SRS status, burn status, progress dates)'
 			},
 			review_statistics: {
 				type: 'checkbox',
-				label: 'Review statistics',
-				default: false
+				label: 'Review Statistics',
+				default: false,
+				hover_tip: 'Include the "/review_statistics" endpoint:\n  * Per-item review count\n  *Correct/incorrect count\n  * Longest streak'
 			},
 			study_materials: {
 				type: 'checkbox',
-				label: 'Synonyms and notes',
-				default: false
+				label: 'Study Materials',
+				default: false,
+				hover_tip: 'Include the "/study_materials" endpoint:\n  * User synonyms\n  * User notes'
 			},
 		},
 		filters: {
 			item_type: {
 				type: 'multi',
 				label: 'Item type',
-				content: {radical:'Radicals',kanji:'Kanji',voculary:'Vocabulary'},
-				default: ['rad','kan','voc'],
+				content: {radical:'Radicals',kanji:'Kanji',vocabulary:'Vocabulary'},
+				default: [],
 				filter_value_map: item_type_to_arr,
-				filter_func: function(filter_value, item){return filter_value[item.object] === true;}
+				filter_func: function(filter_value, item){return filter_value[item.object] === true;},
+				hover_tip: 'Filter by item type (radical, kanji, vocabulary)',
 			},
 			level: {
 				type: 'text',
 				label: 'Level',
 				placeholder: '(e.g. &quot;1-3,5&quot;)',
-				default: '1-60',
+				default: '',
 				filter_value_map: levels_to_arr,
-				filter_func: function(filter_value, item){return filter_value[item.data.level] === true;}
+				filter_func: function(filter_value, item){return filter_value[item.data.level] === true;},
+				hover_tip: 'Filter by Wanikani level\nExamples:\n  "*" (All levels)\n  "1-3,5" (Levels 1 through 3, and level 5)\n  "1 - -1" (From level 1 to your current level minus 1)\n  "-5 - +0" (Your current level and previous 5 levels)\n  "+1" (Your next level)',
 			},
 			srs: {
 				type: 'multi',
 				label: 'SRS Level',
-				content: {appr1:'Apprentice 1',appr2:'Apprentice 2',appr3:'Apprentice 3',app4:'Apprentice 4',guru1:'Guru 1',guru2:'Guru 2',mast:'Master',enli:'Enlightened',burn:'Burned'},
+				content: {appr1:'Apprentice 1',appr2:'Apprentice 2',appr3:'Apprentice 3',appr4:'Apprentice 4',guru1:'Guru 1',guru2:'Guru 2',mast:'Master',enli:'Enlightened',burn:'Burned'},
 				default: [],
+				set_options: function(options){options.assignments = true;},
 				filter_value_map: srs_to_arr,
-				filter_func: function(filter_value, item){return filter_value[item.assignments.srs_stage] === true;}
+				filter_func: function(filter_value, item){return filter_value[item.assignments.srs_stage] === true;},
+				hover_tip: 'Filter by SRS level (Apprentice 1, Apprentice 2, ..., Burn)',
 			},
 			have_burned: {
 				type: 'checkbox',
 				label: 'Have burned',
 				default: true,
-				option_req: function(options){return (options && (options.assignments === true));},
-				filter_func: function(filter_value, item){return (item.assignments.burned_at !== null) === filter_value;}
+				set_options: function(options){options.assignments = true;},
+				filter_func: function(filter_value, item){return (item.assignments.burned_at !== null) === filter_value;},
+				hover_tip: 'Filter items by whether they have ever been burned.\n  * If checked, select burned items (including resurrected)\n  * If unchecked, select items that have never been burned',
 			},
 		}
 	};
