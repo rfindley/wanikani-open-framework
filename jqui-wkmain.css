@@ -1,5 +1,5 @@
 /* Wanikani Open Framework - www.wanikani.com
- * Version 1.0.1
+ * Version 1.0.2
 ----------------------------------*/
 
 /* Layout helpers
@@ -1353,7 +1353,7 @@ html #wkof_ds .ui-button.ui-state-disabled:active {
 
 #wkof_ds .wkof_settings .right > * {width:100%;}
 
-#wkof_ds .wkof_settings .row {text-align:center;margin-bottom:0.4em;}
+#wkof_ds .wkof_settings .row {margin-bottom:0.4em;}
 #wkof_ds .wkof_settings .row:last-child {margin-bottom:0;}
 
 #wkof_ds .wkof_settings .wkof_group {margin-bottom:.7em;}
@@ -1375,24 +1375,24 @@ html #wkof_ds .ui-button.ui-state-disabled:active {
 #wkof_ds .wkof_settings section:first-of-type {margin-top:0;}
 #wkof_ds .wkof_settings section {margin:8px 0;background-color:rgba(0,0,0,0.1);padding-left:4px;}
 
-#wkof_ds .wkof_settings.narrow .left {width:100%;margin-right:0;line-height:0.8em;}
-#wkof_ds .wkof_settings.narrow .right {width:100%;}
-#wkof_ds .wkof_settings.narrow .right > * {overflow:initial;}
-#wkof_ds .wkof_settings.narrow .left > label {text-align:left;}
-#wkof_ds .wkof_settings.narrow input[type="checkbox"] {margin-left:0;}
-#wkof_ds .wkof_settings.narrow .note {padding-left:0px;}
+#wkof_ds .wkof_settings.narrow .left,
+#wkof_ds .wkof_settings .full > .left {width:100%;margin-right:0;line-height:0.8em;}
+#wkof_ds .wkof_settings.narrow .right,
+#wkof_ds .wkof_settings .full > .right {width:100%;}
+#wkof_ds .wkof_settings.narrow .right > *,
+#wkof_ds .wkof_settings .full > .right > * {overflow:initial;}
+#wkof_ds .wkof_settings.narrow .left > label,
+#wkof_ds .wkof_settings .full > .left > label {text-align:left;}
+#wkof_ds .wkof_settings.narrow input[type="checkbox"],
+#wkof_ds .wkof_settings .full > input[type="checkbox"] {margin-left:0;}
+#wkof_ds .wkof_settings.narrow .note,
+#wkof_ds .wkof_settings .full > .note {padding-left:0px;}
 
 #wkof_ds .wkof_settings input[type="color"] {padding:0 1em;}
 #wkof_ds .wkof_settings .setting.invalid {background-color:#ffdddd;}
 #wkof_ds .wkof_settings .setting[disabled] {background-color:#eeeeee;}
 #wkof_ds .wkof_settings .note {font-size:.8em;color:#000000;font-style:italic;margin:2px auto 0 auto;padding-left:222px;width:220px;}
 #wkof_ds .wkof_settings .note.error {font-size:.8em;color:#ff0000;font-style:italic;margin-top: 2px;}
-
-
-#wkof_ds .wkof_settings .full_width .left {width:100%; margin-right:0; text-align:left;}
-#wkof_ds .wkof_settings .full_width > .right {width:100%;}
-#wkof_ds .wkof_settings .fullwidth > select,
-#wkof_ds .wkof_settings .fullwidth > input {width:100%;}
 
 #wkof_ds .wkof_settings .ui-tabs .ui-tabs-nav {
 	background:none;
