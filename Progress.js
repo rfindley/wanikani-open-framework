@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Progress module
 // @namespace   rfindley
 // @description Progress module for Wanikani Open Framework
-// @version     1.0.4
+// @version     1.0.5
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -149,10 +149,10 @@
 	//------------------------------
 	function load_externals() {
 		if (location.hostname.match(/^(www\.)?wanikani\.com$/) !== null)
-			css_url = 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/0017ff1257f2fae9823ac0fccdc6874315a8d039/jqui-wkmain.css';
+			css_url = wkof.support_files['jqui_wkmain.css'];
 
 		return Promise.all([
-			wkof.load_script('https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js', true /* cache */),
+			wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
 			wkof.load_css(css_url, true /* cache */)
 		]);
 	}
