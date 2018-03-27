@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Progress module
 // @namespace   rfindley
 // @description Progress module for Wanikani Open Framework
-// @version     1.0.5
+// @version     1.0.6
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -109,6 +109,7 @@
 				minHeight: 20,
 				maxHeight: window.innerHeight,
 				height: 'auto',
+				dialogClass: 'wkof_progbar_dlg',
 				modal: false,
 				resizable: false,
 				autoOpen: false,

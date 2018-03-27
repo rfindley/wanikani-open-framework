@@ -1,5 +1,5 @@
 /* Wanikani Open Framework - www.wanikani.com
- * Version 1.0.2
+ * Version 1.0.3
 ----------------------------------*/
 
 /* Layout helpers
@@ -1415,6 +1415,7 @@ html #wkof_ds .ui-button.ui-state-disabled:active {
 }
 
 /* Open Framework: Progress Bar*/
+#wkof_ds .wkof_progbar_dlg[role="dialog"] {z-index:20000;}
 #wkof_ds #wkof_progbar_dlg label {margin-bottom:1px;}
 #wkof_ds #wkof_progbar_dlg .wkof_progbar {font-size:.4em;border:1px solid black;margin-bottom:6px;}
 #wkof_ds #wkof_progbar_dlg .wkof_progbar .ui-progressbar-value {background-image:linear-gradient(0deg, #faac05, #fdde9b)}
