@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.9
+// @version     1.0.10
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -21,7 +21,7 @@
 		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=261383'},
 		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=261382'},
 		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=260444'},
-		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=261549'},
+		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=261567'},
 		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=261548'},
 	};
 
@@ -55,7 +55,7 @@
 
 	published_interface.support_files = {
 		'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/0017ff1257f2fae9823ac0fccdc6874315a8d039/jqui-wkmain.css',
+		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/a30cdafd04dee60c43066a23721386bfa774d196/jqui-wkmain.css',
 	};
 
 	//########################################################################
@@ -318,6 +318,7 @@
 			var request = store.get('[dir]');
 			request.onsuccess = process_dir;
 			transaction.oncomplete = open_promise.resolve.bind(null, db);
+			open_promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
 		}
 
 		function process_dir(event){
@@ -439,6 +440,24 @@
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
 			store.put({name:'[dir]',content:JSON.stringify(wkof.file_cache.dir)});
+		}
+	}
+
+	//------------------------------
+	// Remove files that haven't been accessed in a while.
+	//------------------------------
+	function file_cache_cleanup() {
+		var threshold = new Date() - 14*86400000; // 14 days
+		var old_files = [];
+		for (var fname in wkof.file_cache.dir) {
+			var fdate = new Date(wkof.file_cache.dir[fname].last_loaded);
+			if (fdate < threshold) old_files.push(fname);
+		}
+		if (old_files.length === 0) return;
+		console.log('Cleaning out '+old_files.length+' old file(s) from "wkof.file_cache":');
+		for (var fnum in old_files) {
+			console.log('  '+(Number(fnum)+1)+': '+old_files[fnum]);
+			wkof.file_cache.delete(old_files[fnum]);
 		}
 	}
 
