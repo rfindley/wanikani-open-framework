@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.2
+// @version     1.0.3
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -88,7 +88,7 @@
 			var filter_spec = spec.filters[filter_name];
 			if (!filter_spec || typeof filter_spec.set_options !== 'function') continue;
 			var filter_cfg = config.filters[filter_name];
-			filter_spec.set_options(options, filter_cfg.value);
+			filter_spec.set_options(cfg_options, filter_cfg.value);
 		}
 
 		// Fetch all of the endpoints
@@ -315,18 +315,22 @@
 	// an array containing 'true' for each item type contained in the criteria.
 	//------------------------------
 	function item_type_to_arr(filter_value) {
-		if (typeof filter_value === 'string') {
-			if (filter_value.indexOf(',') >= 0) {
-				filter_value = split_list(filter_value);
-			} else {
-				filter_value = [filter_value];
+		var xlat = {rad:'radical',kan:'kanji',voc:'vocabulary'};
+		var arr = {}, value;
+		if (typeof filter_value === 'string') filter_value = split_list(filter_value);
+		if (typeof filter_value !== 'object') return {};
+		if (Array.isArray(filter_value)) {
+			for (var idx in filter_value) {
+				value = filter_value[idx];
+				value = xlat[value] || value;
+				arr[value] = true;
+			}
+		} else {
+			for (value in filter_value) {
+				arr[xlat[value] || value] = (filter_value[value] === true);
 			}
 		}
-		return {
-			radical: (filter_value.indexOf('rad') >= 0),
-			kanji: (filter_value.indexOf('kan') >= 0),
-			vocabulary: (filter_value.indexOf('voc') >= 0)
-		}
+		return arr;
 	}
 
 	//------------------------------
@@ -334,17 +338,22 @@
 	// array containing 'true' for each srs level contained in the criteria.
 	//------------------------------
 	function srs_to_arr(filter_value) {
-		if (typeof filter_value === 'string') {
-			if (filter_value.indexOf(',') >= 0) {
-				filter_value = split_list(filter_value);
-			} else {
-				filter_value = [filter_value];
+		var index = ['init','appr1','appr2','appr3','appr4','guru1','guru2','mast','enli','burn'];
+		var arr = [], value;
+		if (typeof filter_value === 'string') filter_value = split_list(filter_value);
+		if (typeof filter_value !== 'object') return {};
+		if (Array.isArray(filter_value)) {
+			for (var idx in filter_value) {
+				value = Number(filter_value[idx]);
+				if (isNaN(value)) value = index.indexOf(filter_value[idx]);
+				arr[value] = true;
+			}
+		} else {
+			for (value in filter_value) {
+				arr[index.indexOf(value)] = (filter_value[value] === true);
 			}
 		}
-		return ['init','appr1','appr2','appr3','appr4','guru1','guru2','mast','enli','burn']
-			.map(function(name){
-				return filter_value.indexOf(name) >= 0;
-			});
+		return arr;
 	}
 
 	//------------------------------
