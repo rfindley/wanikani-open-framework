@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.4
+// @version     1.0.5
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -290,13 +290,13 @@
 	//------------------------------
 	// Open the settings dialog.
 	//------------------------------
-	function load_settings(context) {
+	function load_settings(context, defaults) {
 		var script_id = (typeof context === 'string' ? context : context.cfg.script_id);
 		return wkof.file_cache.load('wkof.settings.'+script_id)
 		.then(finish, finish.bind(null,{}));
 
 		function finish(settings) {
-			wkof.settings[script_id] = settings;
+			wkof.settings[script_id] = $.extend(true, {}, defaults || {}, settings);
 		}
 	}
 
@@ -546,7 +546,8 @@
 
 	Promise.all([
 		wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
-		wkof.load_css(css_url, true /* cache */)
+		wkof.load_css(css_url, true /* cache */),
+		wkof.ready('document')
 	])
 	.then(function(data){
 		ready = true;
