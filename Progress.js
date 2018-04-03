@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Progress module
 // @namespace   rfindley
 // @description Progress module for Wanikani Open Framework
-// @version     1.0.6
+// @version     1.0.7
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -152,10 +152,17 @@
 		if (location.hostname.match(/^(www\.)?wanikani\.com$/) !== null)
 			css_url = wkof.support_files['jqui_wkmain.css'];
 
-		return Promise.all([
-			wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
-			wkof.load_css(css_url, true /* cache */)
-		]);
+		return wkof.ready('document')
+		.then(function(){
+			return Promise.all([
+				wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
+				wkof.load_css(css_url, true /* cache */)
+			]);
+		})
+		.then(function(){
+			// Workaround...  https://community.wanikani.com/t/19984/55
+			delete $.fn.autocomplete;
+		});
 	}
 
 	//------------------------------

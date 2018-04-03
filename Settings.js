@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.5
+// @version     1.0.6
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -296,7 +296,10 @@
 		.then(finish, finish.bind(null,{}));
 
 		function finish(settings) {
-			wkof.settings[script_id] = $.extend(true, {}, defaults || {}, settings);
+			if (defaults)
+				wkof.settings[script_id] = $.extend(true, {}, defaults, settings);
+			else
+				wkof.settings[script_id] = settings;
 		}
 	}
 
@@ -544,13 +547,18 @@
 	if (location.hostname.match(/^(www\.)?wanikani\.com$/) !== null)
 		css_url = wkof.support_files['jqui_wkmain.css'];
 
-	Promise.all([
-		wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
-		wkof.load_css(css_url, true /* cache */),
-		wkof.ready('document')
-	])
+	wkof.ready('document')
+	.then(function(){
+		return Promise.all([
+			wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
+			wkof.load_css(css_url, true /* cache */)
+		]);
+	})
 	.then(function(data){
 		ready = true;
+
+		// Workaround...  https://community.wanikani.com/t/19984/55
+		delete $.fn.autocomplete;
 
 		// Notify listeners that we are ready.
 		// Delay guarantees include() callbacks are called before ready() callbacks.
