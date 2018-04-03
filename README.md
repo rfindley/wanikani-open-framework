@@ -132,8 +132,8 @@ Module-loading:
 
 Resource-loading:
 * **`load_file()`** - A function for loading any file type from a URL.
-* **`load_script()`** - A function for loading a Javascript file, and installing it into the DOM.
-* **`load_css()`** - A function for loading a CSS file, and installing it into the DOM.
+* **`load_script()`** - A function for loading a Javascript file and installing it into the DOM.
+* **`load_css()`** - A function for loading a CSS file and installing it into the DOM.
 
 State functions:
 * **`get_state()`** - A function for getting the value of a state variable.

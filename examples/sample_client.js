@@ -104,7 +104,7 @@ window.sample_client = {};
 
 		// The settings box configuration
 		wkof.Menu.insert_script_link({
-			script_id: 'timeln',
+			name:      'timeln',
 			submenu:   'Settings',
 			title:     'Ultimate Timeline',
 			on_click:  open_settings
