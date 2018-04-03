@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.3
+// @version     1.0.4
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -141,7 +141,7 @@
 			last_update = new Date(last_update).toISOString().replace(/Z$/,'000Z');
 
 		// Set up URL and headers
-		url = "https://www.wanikani.com/api/v2/" + endpoint;
+		url = "https://api.wanikani.com/v2/" + endpoint;
 
 		// Add user-specified data filters to the URL
 		filters.updated_after = last_update;
