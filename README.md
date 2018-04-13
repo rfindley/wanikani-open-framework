@@ -2,7 +2,7 @@
 
 Wanikani Open Framework ("`wkof`") is a user-created framework for rapidly developing web browser userscripts for use with the Japanese kanji learning site [wanikani.com](https://www.wanikani.com).
 
-_[Disclaimer: This project is currently in early development, so changes are expected to occur frequently.  Script writers are encouraged to evaluate the API and provide feedback to help shape its usefulness to the developer community.]_
+_[Disclaimer: This project is currently in early development, so changes are expected to occur frequently.  However, the interface will generally remain backward compatible.  Any potentially breaking changes will be announced and discussed [[here](https://community.wanikani.com/t/wanikani-open-framework-discussion/22231)].  Script writers are encouraged to evaluate the API and provide feedback to help shape its usefulness to the developer community.]_
 
 -----
 
@@ -13,6 +13,9 @@ _[Disclaimer: This project is currently in early development, so changes are exp
 * [Getting Started](#getting_started)
 * [Reference](#reference)
   - [Core](#core_module)
+    - [`version`](#wkof_version)
+      - [`value`](#version_value)
+      - [`compare_to()`](#version_compare_to)
     - [`file_cache`](#file_cache)
       - [`dir {}`](#file_cache_dir)
       - [`save()`](#file_cache_save)
@@ -60,18 +63,12 @@ The framework is structured as follows:
 
 # <a id="installation">Installation</a>
 
-> **_[Note: While the framework is still in prototype, you can update the modules by deleting them from `file_cache` via a pattern-match for 'github' URLs:_**
->
-> ```javascript
-> wkof.file_cache.delete(/github/);
-> ```
-
 The core script must be installed in a script-hosting browser plugin, such as TamperMonkey.
 
-1. Install your desired script host (such as TamperMonkey).  Your chosen script host must support the ability to specify the run-order of scripts.
-2. Create a new empty script in TamperMonkey, and paste the contents of the Core.js file.<br>
-_(Note: Eventually, the core script will be released on GreasyFork.org.  At that time, the installation instructions will change accordingly.)_
-3. Configure the script to run before all other scripts so the framework will be ready to use when its client script begin running.
+1. Install your desired script host plugin.  The script host must be able to specify the run-order of scripts.
+2. To use the current release of the Open Framework, click [[here](https://greasyfork.org/en/scripts/38582-wanikani-open-framework)] to install it from greasyfork.org.<br>
+If you want to use the latest pre-release version, create a new empty script in TamperMonkey, and paste the contents of the Core.js file from the github repository.
+3. Configure your script host plugin to run the Open Framework before all other scripts, which allows client scripts to access the framework at startup.
 
 To verify installation:
 
@@ -107,8 +104,66 @@ Expand the `wkof` object, and examine its contents:
 
 ![Basic wkof members](docs/images/wkof_members_basic.png)
 
-The contents shown above come from the Core script, which we discuss in the next section.
+The `wkof` object is the interface you will use when interacting with the Open Framework and its various modules.
+
+The contents shown above come from the Core script, which we discuss below.
 Your console may show additional contents if any framework modules are loaded.
+
+### Checking for Proper Installation
+
+To ensure the best user experience, it is recommended that your script check for the presence of `wkof`, and point the user to installation instructions if it is not installed or is improperly installed.
+
+The code below is the currently recommended method.<br>_(* but see further below if you need a specific version of the framework)_
+
+```javascript
+if (!window.wkof) {
+    alert('[Your script name here] script requires Wanikani Open Framework.\nYou will now be forwarded to installation instructions.');
+    window.location.href = 'https://community.wanikani.com/t/instructions-installing-wanikani-open-framework/28549';
+    return;
+}
+```
+
+### Checking the Framework Version
+
+Some client scripts may require a minimum version of the Open Framework.
+
+**As of version 1.0.14**, the Open Framework includes a version string that is accessible from the `wkof` object:
+
+```javascript
+> wkof.version.value
+"1.0.14"
+```
+
+Also, the `wkof.version.compare_to()` function provides a simple method for checking if the current version is `"older"`, `"same"`, or `"newer"` than a specific version:
+
+```javascript
+> wkof.version.value
+"1.0.14"
+> wkof.version.compare_to('1.0')
+"newer"
+> wkof.version.compare_to('1.0.14')
+"same"
+> wkof.version.compare_to('2.1.3')
+"older"
+```
+
+The code below is the currently recommended method if your code needs a specific version of the framework:
+
+```javascript
+var wkof_version_needed = '1.0.14';
+if (!window.wkof) {
+  alert('[Your script name here] script requires Wanikani Open Framework.\nYou will now be forwarded to installation instructions.');
+  window.location.href = 'https://community.wanikani.com/t/instructions-installing-wanikani-open-framework/28549';
+  return;
+}
+if (!wkof.version || wkof.version.compare_to(wkof_version_needed) === 'older') {
+  alert('[Your script name here] script requires Wanikani Open Framework version '+wkof_version_needed+'.\nYou will now be forwarded to update page.');
+  window.location.href = 'https://greasyfork.org/en/scripts/38582-wanikani-open-framework';
+  return;
+}
+```
+
+**\* _NOTE: This "Getting Started" section is still under development.  Until it is complete, please refer to the [Reference](#reference) section and its numerous examples below.]_**
 
 -----
 
@@ -122,6 +177,9 @@ The core module provides an interface for:
 * Loading and saving files or objects to cache
 * Setting and waiting on state variables
 * Sending and listening for events
+
+File caching:
+* **`version`** - A sub-object for checking the framework version.
 
 File caching:
 * **`file_cache`** - A sub-object for caching arbitrary files and data.
@@ -145,6 +203,56 @@ Event functions:
 * **`trigger()`** - A function for triggering an event.
 
 In addition to the above core functions, each module (when loaded) will have its own sub-object.  These sub-objects are discussed in the corresponding module documentation.
+
+-----
+
+### <a id="wkof_version">Framework Version</a>
+
+The `version` object allows you check the current version of the Open Framework and compare it against a specific version that your script needs.
+
+The members of the `version` object are:
+* **`value`** - A string containing the framework version.
+* **`compare_to()`** - A function for comparing the framework version against a specific version number.
+
+-----
+
+### <a id="version_value">`wkof.version.value`</a>
+
+A string containing the framework version.
+
+#### _Example:_
+```javascript
+var version = wkof.version.value;
+console.log('Currently running Open Framework version ' + version);
+```
+
+-----
+
+### <a id="version_compare_to">`wkof.version.compare_to(needed_version)`</a>
+
+A function for comparing the framework version against a specific version number.
+
+#### _Parameters:_
+* **`needed_version`** - A string containing the version of framework that your script requires.
+
+#### _Return value:_
+* **`string`** - A string containing one of the following values:
+  - **`"older"`** - The framework is older than your `needed_version`.
+  - **`"same"`** - The framework is the same as your `needed_version`.
+  - **`"newer"`** - The framework is newer than your `needed_version`.
+
+#### _Example:_
+```javascript
+var wkof_version_needed = '2.0';
+if (!wkof.version || wkof.version.compare_to(wkof_version_needed) === 'older') {
+    // TODO: Tell the user they need to upgrade the framework
+    console.log('You need to upgrade from version '+wkof.version.value+' to version '+wkof_version_needed + '!');
+}
+
+// Output:  You need to upgrade from version 1.0.14 to version 2.0!
+```
+
+-----
 
 ### <a id="file_cache">File Cache</a>
 
