@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.6
+// @version     1.0.7
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -177,6 +177,13 @@
 					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
+				case 'button':
+					context.config_list[name] = item;
+					html += make_label(item);
+					html += wrap_right('<button type="button" class="setting" name="'+name+'">Open Settings</button>');
+					html = wrap_row(html, item.full_width, item.hover_tip);
+					break;
+
 				case 'divider':
 					html += '<hr>';
 					break;
@@ -246,9 +253,11 @@
 
 		$('.wkof_stabs').tabs();
 		dialog.dialog('open');
-		$('#wkofs_'+context.cfg.script_id+' .setting[multiple]').on('mousedown', toggle_multi.bind(null,context));
-		$('#wkofs_'+context.cfg.script_id+' .setting').on('change', setting_changed.bind(null,context));
-		$('#wkofs_'+context.cfg.script_id+' form').on('submit', function(){return false;});
+		var dialog_elem = $('#wkofs_'+context.cfg.script_id);
+		dialog_elem.find('.setting[multiple]').on('mousedown', toggle_multi.bind(null,context));
+		dialog_elem.find('.setting').on('change', setting_changed.bind(null,context));
+		dialog_elem.find('form').on('submit', function(){return false;});
+		dialog_elem.find('button.setting').on('click', setting_button_clicked.bind(null,context));
 
 		if (typeof context.cfg.pre_open === 'function') context.cfg.pre_open(dialog);
 		context.reversions = $.extend(true,{},wkof.settings[context.cfg.script_id]);
@@ -274,6 +283,14 @@
 				multi.focus();
 			},0);
 			return setting_changed(context, e);
+		}
+
+		function setting_button_clicked(context, e) {
+			var name = e.target.attributes.name.value;
+			var item = context.config_list[name];
+			window.item = item;
+			if (typeof item.on_click === 'function')
+				item.on_click.call(e, name, item, setting_changed.bind(context, context, e));
 		}
 	}
 
@@ -462,6 +479,7 @@
 		if (valid.valid) {
 			if (item.no_save !== true) set_value(context, settings, name, value);
 			if (typeof item.on_change === 'function') item.on_change.call(event.target, name, value, item);
+			if (typeof context.cfg.on_change === 'function') context.cfg.on_change.call(event.target, name, value, item);
 			if (item.refresh_on_change === true) refresh(context);
 		}
 

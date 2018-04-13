@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.13
+// @version     1.0.14
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,6 +13,8 @@
 (function(global) {
 	'use strict';
 
+	var version = '1.0.14';
+
 	//########################################################################
 	//------------------------------
 	// Supported Modules
@@ -22,7 +24,7 @@
 		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=262769'},
 		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=260444'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=262841'},
-		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=262842'},
+		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=265014'},
 	};
 
 	//########################################################################
@@ -50,12 +52,17 @@
 
 		get_state:  get_state,         // get(state_var)
 		set_state:  set_state,         // set(state_var, value)
-		wait_state: wait_state         // wait(state_var, value[, callback[, persistent]]) => if no callback, return one-shot Promise
+		wait_state: wait_state,        // wait(state_var, value[, callback[, persistent]]) => if no callback, return one-shot Promise
+
+		version: {
+			value: version,
+			compare_to: compare_to,    // compare_version(version)
+		}
 	};
 
 	published_interface.support_files = {
 		'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/a30cdafd04dee60c43066a23721386bfa774d196/jqui-wkmain.css',
+		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/6296160b53cdc4e694d431d3d493754ac07bb0b2/jqui-wkmain.css',
 	};
 
 	//########################################################################
@@ -64,6 +71,23 @@
 	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 
 	//########################################################################
+
+	//------------------------------
+	// Compare the framework version against a specific version.
+	//------------------------------
+	function compare_to(client_version) {
+		var client_ver = client_version.split('.').map(d => Number(d))
+		var wkof_ver = version.split('.').map(d => Number(d));
+		var len = Math.max(client_ver.length, wkof_ver.length);
+		for (var idx = 0; idx < len; idx++) {
+			var a = client_ver[idx] || 0;
+			var b = wkof_ver[idx] || 0;
+			if (a === b) continue;
+			if (a < b) return 'newer';
+			return 'older';
+		}
+		return 'same';
+	}
 
 	//------------------------------
 	// Include a list of modules.
