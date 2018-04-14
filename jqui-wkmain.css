@@ -1,5 +1,5 @@
 /* Wanikani Open Framework - www.wanikani.com
- * Version 1.0.5
+ * Version 1.0.6
 ----------------------------------*/
 
 /* Layout helpers
@@ -1393,6 +1393,8 @@ html #wkof_ds .ui-button.ui-state-disabled:active {
 #wkof_ds .wkof_settings .setting[disabled] {background-color:#eeeeee;}
 #wkof_ds .wkof_settings .note {font-size:.8em;color:#000000;font-style:italic;margin:2px auto 0 auto;padding-left:222px;width:220px;}
 #wkof_ds .wkof_settings .note.error {font-size:.8em;color:#ff0000;font-style:italic;margin-top: 2px;}
+
+#wkof_ds .wkof_settings input:invalid {color:#555;border:1px solid #ccc;}
 
 #wkof_ds .wkof_settings .ui-tabs .ui-tabs-nav {
 	background:none;
