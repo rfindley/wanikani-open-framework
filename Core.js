@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.14
+// @version     1.0.15
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -62,7 +62,7 @@
 
 	published_interface.support_files = {
 		'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/6296160b53cdc4e694d431d3d493754ac07bb0b2/jqui-wkmain.css',
+		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/0c414bb4bc8ecaee35d4ee7463eadc5816d69504/jqui-wkmain.css',
 	};
 
 	//########################################################################
