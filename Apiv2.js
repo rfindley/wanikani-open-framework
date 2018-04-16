@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.4
+// @version     1.0.5
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -424,8 +424,7 @@
 				// We don't check username when using override key.
 				if (using_apikey_override || skip_username_check || (user_info.data.username === user)) {
 					wkof.Apiv2.user = user_info.data.username;
-					wkof.user = user_info.data;
-					return;
+					return populate_user_cache();
 				}
 			}
 			// Cache doesn't match.
@@ -450,14 +449,12 @@
 	// Populate the user info into cache.
 	//------------------------------
 	function populate_user_cache() {
-		console.log('Fetching user info...');
 		return fetch_endpoint('user')
 		.then(function(user_info){
 			// Store the apikey in the cache.
 			user_info.data.apikey = wkof.Apiv2.key;
 			wkof.Apiv2.user = user_info.data.username;
 			wkof.user = user_info.data
-			console.log('Caching user info...');
 			return wkof.file_cache.save('Apiv2.user', user_info);
 		});
 	}
