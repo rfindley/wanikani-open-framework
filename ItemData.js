@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.4
+// @version     1.0.5
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -21,6 +21,7 @@
 		},
 		get_items: get_items,
 		get_index: get_index,
+		pause_ready_event: pause_ready_event
 	};
 	//########################################################################
 
@@ -421,6 +422,49 @@
 		}
 	}
 
+	var registration_promise;
+	var registration_timeout;
+	var registration_counter = 0;
+	//------------------------------
+	// Ask clients to add items to the registry.
+	//------------------------------
+	function call_for_registration() {
+		registration_promise = promise();
+		wkof.trigger('wkof.ItemData.request_registration');
+		if (!check_registration_counter()) {
+			registration_timeout = setTimeout(function(){
+				console.log('Timeout waiting for wkof.ItemData.registry');
+				registration_timeout = undefined;
+				check_registration_counter(true /* force_ready */);
+			}, 3000);
+		}
+		return registration_promise;
+	}
+
+	//------------------------------
+	// Request to pause the 'ready' event.
+	//------------------------------
+	function pause_ready_event(value) {
+		if (value === true) {
+			console.log('pause_ready_event(true)');
+			registration_counter++;
+		} else {
+			console.log('pause_ready_event(false)');
+			registration_counter--;
+			check_registration_counter();
+		}
+	}
+
+	//------------------------------
+	// If registration is complete or timed out, mark it as resolved.
+	//------------------------------
+	function check_registration_counter(force_ready) {
+		if (!force_ready && registration_counter > 0) return false;
+		if (registration_timeout !== undefined) clearTimeout(registration_timeout);
+		registration_promise.resolve();
+		return true;
+	}
+
 	//------------------------------
 	// Notify listeners that we are ready.
 	//------------------------------
@@ -429,7 +473,7 @@
 		setTimeout(function(){wkof.set_state('wkof.ItemData', 'ready');},0);
 	}
 	wkof.include('Apiv2');
-	wkof.ready('Apiv2').then(notify_ready);
+	wkof.ready('Apiv2').then(call_for_registration).then(notify_ready);
 
 })(this);
 
