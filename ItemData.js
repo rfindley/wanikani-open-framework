@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.5
+// @version     1.0.6
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -430,14 +430,12 @@
 	//------------------------------
 	function call_for_registration() {
 		registration_promise = promise();
-		wkof.trigger('wkof.ItemData.request_registration');
-		if (!check_registration_counter()) {
-			registration_timeout = setTimeout(function(){
-				console.log('Timeout waiting for wkof.ItemData.registry');
-				registration_timeout = undefined;
-				check_registration_counter(true /* force_ready */);
-			}, 3000);
-		}
+		wkof.set_state('wkof.ItemData.registry', 'ready');
+		setTimeout(check_registration_counter, 1);
+		registration_timeout = setTimeout(function(){
+			registration_timeout = undefined;
+			check_registration_counter(true /* force_ready */);
+		}, 3000);
 		return registration_promise;
 	}
 
@@ -446,10 +444,8 @@
 	//------------------------------
 	function pause_ready_event(value) {
 		if (value === true) {
-			console.log('pause_ready_event(true)');
 			registration_counter++;
 		} else {
-			console.log('pause_ready_event(false)');
 			registration_counter--;
 			check_registration_counter();
 		}
