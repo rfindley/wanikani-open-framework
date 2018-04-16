@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.3
+// @version     1.0.4
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -56,11 +56,16 @@
 			remaining++;
 			spec.fetcher(cfg, global_options)
 			.then(function(data){
+				var filter_promise;
 				if (typeof spec === 'object')
-					data = apply_filters(data, cfg, spec);
-				items = items.concat(data);
-				remaining--;
-				if (!remaining) fetch_promise.resolve(items);
+					filter_promise = apply_filters(data, cfg, spec);
+				else
+					filter_promise = Promise.resolve(data);
+				filter_promise.then(function(data){
+					items = items.concat(data);
+					remaining--;
+					if (!remaining) fetch_promise.resolve(items);
+				});
 			})
 			.catch(function(e){
 				if (e) throw e;
@@ -127,6 +132,7 @@
 	// Filter the items array according to the specified filters and options.
 	//------------------------------
 	function apply_filters(items, config, spec) {
+		var prep_promises = [];
 		var options = config.options || {};
 		var filters = [];
 		for (var filter_name in config.filters) {
@@ -136,11 +142,12 @@
 			var filter_value = filter_cfg.value;
 			var filter_spec = spec.filters[filter_name];
 			if (filter_spec === undefined) throw new Error('wkof.ItemData.get_item() - Invalid filter "'+filter_name+'"');
-			if (typeof filter_spec.filter_func !== 'function' ||
-				(typeof filter_spec.option_req === 'function' && filter_spec.option_req(options) !== true))
-				continue;
 			if (typeof filter_spec.filter_value_map === 'function')
 				filter_value = filter_spec.filter_value_map(filter_cfg.value);
+			if (typeof filter_spec.prepare === 'function') {
+				var result = filter_spec.prepare(filter_value);
+				if (result instanceof Promise) prep_promises.push(result);
+			}
 			filters.push({
 				name: filter_name,
 				func: filter_spec.filter_func,
@@ -148,24 +155,27 @@
 				invert: (filter_cfg.invert === true)
 			});
 		}
-		var result = [];
-		for (var item_idx in items) {
-			var keep = true;
-			var item = items[item_idx];
-			for (var filter_idx in filters) {
-				var filter = filters[filter_idx];
-				try {
-					keep = filter.func(filter.filter_value, item);
-					if (filter.invert) keep = !keep;
-					if (!keep) break;
-				} catch(e) {
-					keep = false;
-					break;
+
+		return Promise.all(prep_promises).then(function(){
+			var result = [];
+			for (var item_idx in items) {
+				var keep = true;
+				var item = items[item_idx];
+				for (var filter_idx in filters) {
+					var filter = filters[filter_idx];
+					try {
+						keep = filter.func(filter.filter_value, item);
+						if (filter.invert) keep = !keep;
+						if (!keep) break;
+					} catch(e) {
+						keep = false;
+						break;
+					}
 				}
+				if (keep) result.push(item);
 			}
-			if (keep) result.push(item);
-		}
-		return result;
+			return result;
+		});
 	}
 
 	//------------------------------
