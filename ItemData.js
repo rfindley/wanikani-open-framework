@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.8
+// @version     1.0.9
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -159,9 +159,11 @@
 
 		return Promise.all(prep_promises).then(function(){
 			var result = [];
+			var max_level = Math.max(wkof.user.max_level_granted_by_subscription, wkof.user.override_max_level || 0);
 			for (var item_idx in items) {
 				var keep = true;
 				var item = items[item_idx];
+				if (item.data.level > max_level) continue;
 				for (var filter_idx in filters) {
 					var filter = filters[filter_idx];
 					try {
