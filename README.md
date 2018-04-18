@@ -647,11 +647,12 @@ For `wk_items`, the following filters are currently available:
   - `'1 - -1'` - Return items from levels 1 through your last level (current minus 1).
   - `'*, !-3 - -1'` - Return items from all levels, but exclude the last three levels.
 
-* **`srs`** - An array or comma-delimited string specifying the SRS levels to return.  Supported values are `appr1`, `appr2`, `appr3`, `appr4`, `guru1`, `guru2`, `mast`, `enli`, and `burn`.
+* **`srs`** - An array or comma-delimited string specifying the SRS levels to return.<br>Supported values are `init`, `appr1`, `appr2`, `appr3`, `appr4`, `guru1`, `guru2`, `mast`, `enli`, and `burn`.<br>Also, numeric values `0` to `9` are accepted.
 
   Examples:
   - `['appr1','appr2','appr3','appr4']` - Return all Apprentice items (Apprentice 1 through 4).
   - `'mast, enli, burn'` - Return all Master, Enlightened, and Burned items.
+  - `'7, 8, 9'` - Return all Master, Enlightened, and Burned items.
 
 * **`have_burned`** - _(boolean)_ If `true`, return all items that have been previously burned, even if they are currently resurrected.  If `false`, return all items that have never been burned.
 
