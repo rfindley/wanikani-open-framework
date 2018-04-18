@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.7
+// @version     1.0.8
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -236,11 +236,11 @@
 			srs: {
 				type: 'multi',
 				label: 'SRS Level',
-				content: {init:'Initiate',appr1:'Apprentice 1',appr2:'Apprentice 2',appr3:'Apprentice 3',appr4:'Apprentice 4',guru1:'Guru 1',guru2:'Guru 2',mast:'Master',enli:'Enlightened',burn:'Burned'},
+				content: {lock:'Locked',init:'Initiate (Lesson Queue)',appr1:'Apprentice 1',appr2:'Apprentice 2',appr3:'Apprentice 3',appr4:'Apprentice 4',guru1:'Guru 1',guru2:'Guru 2',mast:'Master',enli:'Enlightened',burn:'Burned'},
 				default: [],
 				set_options: function(options){options.assignments = true;},
 				filter_value_map: srs_to_arr,
-				filter_func: function(filter_value, item){return filter_value[item.assignments.srs_stage] === true;},
+				filter_func: function(filter_value, item){return filter_value[(item.assignments ? item.assignments.srs_stage : -1)] === true;},
 				hover_tip: 'Filter by SRS level (Apprentice 1, Apprentice 2, ..., Burn)',
 			},
 			have_burned: {

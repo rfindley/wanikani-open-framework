@@ -647,9 +647,10 @@ For `wk_items`, the following filters are currently available:
   - `'1 - -1'` - Return items from levels 1 through your last level (current minus 1).
   - `'*, !-3 - -1'` - Return items from all levels, but exclude the last three levels.
 
-* **`srs`** - An array or comma-delimited string specifying the SRS levels to return.<br>Supported values are `init`, `appr1`, `appr2`, `appr3`, `appr4`, `guru1`, `guru2`, `mast`, `enli`, and `burn`.<br>Also, numeric values `0` to `9` are accepted.
+* **`srs`** - An array or comma-delimited string specifying the SRS levels to return.<br>Supported values are `lock`, `init`, `appr1`, `appr2`, `appr3`, `appr4`, `guru1`, `guru2`, `mast`, `enli`, and `burn`.<br>Also, numeric values `-1` to `9` are accepted, where `-1` = `lock`, `0` = `init`, `1` = `appr1`, etc.
 
   Examples:
+  - `['init']` - Return items in the lesson queue.
   - `['appr1','appr2','appr3','appr4']` - Return all Apprentice items (Apprentice 1 through 4).
   - `'mast, enli, burn'` - Return all Master, Enlightened, and Burned items.
   - `'7, 8, 9'` - Return all Master, Enlightened, and Burned items.
