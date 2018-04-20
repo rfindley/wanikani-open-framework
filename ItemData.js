@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.9
+// @version     1.0.10
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -229,11 +229,11 @@
 			level: {
 				type: 'text',
 				label: 'Level',
-				placeholder: '(e.g. &quot;1-3,5&quot;)',
+				placeholder: '(e.g. &quot;1..3,5&quot;)',
 				default: '',
 				filter_value_map: levels_to_arr,
 				filter_func: function(filter_value, item){return filter_value[item.data.level] === true;},
-				hover_tip: 'Filter by Wanikani level\nExamples:\n  "*" (All levels)\n  "1-3,5" (Levels 1 through 3, and level 5)\n  "1 - -1" (From level 1 to your current level minus 1)\n  "-5 - +0" (Your current level and previous 5 levels)\n  "+1" (Your next level)',
+				hover_tip: 'Filter by Wanikani level\nExamples:\n  "*" (All levels)\n  "1..3,5" (Levels 1 through 3, and level 5)\n  "1..-1" (From level 1 to your current level minus 1)\n  "-5..+0" (Your current level and previous 5 levels)\n  "+1" (Your next level)',
 			},
 			srs: {
 				type: 'multi',
@@ -370,7 +370,7 @@
 	}
 
 	//------------------------------
-	// Given an level criteria string (e.g. '1-3,5,8'), return an array containing
+	// Given an level criteria string (e.g. '1..3,5,8'), return an array containing
 	// 'true' for each level contained in the criteria.
 	//------------------------------
 	function levels_to_arr(filter_value) {
@@ -392,11 +392,11 @@
 				continue;
 			}
 
-			// Match 'a-b' = range of levels (or exclude if preceded by '!')
-			match = crit.match(/^\s*(\!?)\s*((\+|-)?\d+)\s*-\s*((\+|-)?\d+)\s*$/);
+			// Match 'a..b' = range of levels (or exclude if preceded by '!')
+			match = crit.match(/^\s*(\!?)\s*((\+|-)?\d+)\s*(-|\.\.\.?|to)\s*((\+|-)?\d+)\s*$/);
 			if (match !== null) {
 				start = to_num(match[2]);
-				stop = to_num(match[4]);
+				stop = to_num(match[5]);
 				if (match[1] === '!') value = false;
 				for (lvl = start; lvl <= stop; lvl++)
 					levels[lvl] = value;
