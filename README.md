@@ -640,12 +640,12 @@ For `wk_items`, the following filters are currently available:
 
   Examples:
   - `'1,2,3'` - Return items from levels 1, 2, and 3.
-  - `'1-3,5'` - Return items from levels 1 through 3, and 5.
+  - `'1..3,5'` - Return items from levels 1 through 3, and 5.
   - `'-1'` - Return items from your previous level (current level minus 1).
   - `'+1'` - Return items from your next level (current level plus 1).
-  - `'-5 - +0'` - Return items from your last 5 levels, including your current level.
-  - `'1 - -1'` - Return items from levels 1 through your last level (current minus 1).
-  - `'*, !-3 - -1'` - Return items from all levels, but exclude the last three levels.
+  - `'-5..+0'` - Return items from your last 5 levels, including your current level.
+  - `'1..-1'` - Return items from levels 1 through your last level (current minus 1).
+  - `'*, !-3..-1'` - Return items from all levels, but exclude the last three levels.
 
 * **`srs`** - An array or comma-delimited string specifying the SRS levels to return.<br>Supported values are `lock`, `init`, `appr1`, `appr2`, `appr3`, `appr4`, `guru1`, `guru2`, `mast`, `enli`, and `burn`.<br>Also, numeric values `-1` to `9` are accepted, where `-1` = `lock`, `0` = `init`, `1` = `appr1`, etc.
 
@@ -699,7 +699,7 @@ function fetch_items() {
         wk_items: {
             options: {subjects: true, assignments: true},
             filters: {
-                level: '1-3',
+                level: '1..3',
                 item_type: 'rad, kan'
             }
         }
