@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.7
+// @version     1.0.8
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -317,6 +317,7 @@
 				wkof.settings[script_id] = $.extend(true, {}, defaults, settings);
 			else
 				wkof.settings[script_id] = settings;
+			return wkof.settings[script_id];
 		}
 	}
 
