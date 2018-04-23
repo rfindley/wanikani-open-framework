@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.5
+// @version     1.0.6
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -23,10 +23,6 @@
 
 	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 
-	var available_endpoints = [
-		'assignments','level_progressions','resets','review_statistics',
-		'reviews','study_materials','subjects','summary','user'
-	];
 	var using_apikey_override = false;
 	var skip_username_check = false;
 
@@ -55,8 +51,8 @@
 	function clear_cache(include_non_user) {
 		var clear_promises = [];
 		var dir = wkof.file_cache.dir;
-		for (var idx in available_endpoints) {
-			var filename = 'Apiv2.'+available_endpoints[idx];
+		for (var filename in wkof.file_cache.dir) {
+			if (!filename.match(/^Apiv2\./)) continue;
 			if ((filename === 'Apiv2.subjects' && include_non_user !== true) || !dir[filename]) continue;
 			clear_promises.push(filename);
 		}
@@ -314,10 +310,6 @@
 
 		// Make sure the requested endpoint is valid.
 		var merged_data;
-		if (available_endpoints.indexOf(ep_name) < 0) {
-			get_promise.reject(new Error('Invalid endpoint name "'+ep_name+'"'));
-			return get_promise;
-		}
 
 		// Perform the fetch, and process the data.
 		wkof.file_cache.load('Apiv2.'+ep_name)
