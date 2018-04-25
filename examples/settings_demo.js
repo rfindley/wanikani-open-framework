@@ -54,22 +54,26 @@ window.sample_client = {};
 			on_save: dialog_save,
 			on_cancel: dialog_cancel,
 			on_close: dialog_close,
-			settings: {
-				'grp_presets': {type:'group',label:'Presets',content:{
-					'presets': {type:'list',refresh_on_change:true,content:{}},
-				}},
-				'grp_group': {type:'group',label:'Group',content:{
-					'section': {type:'section',label:'Section'},
-					'dropdown': {type:'dropdown',label:'Dropdown',on_change:log_change,content:{'val1':'Value 1','val2':'Value 2'}},
-					'list': {type:'list',label:'List',size:4,on_change:log_change,content:{'val1':'Value 1','val2':'Value 2','val3':'Value 3'}},
-					'multi': {type:'list',label:'Multi',multi:true,size:3,on_change:log_change,content:{'val1':'Value 1','val2':'Value 2','val3':'Value 3','val4':'Value 4','val5':'Value 5','val6':'Value 6'}},
-					'divider': {type:'divider'},
-					'text': {type:'text',label:'Text',on_change:log_change,default:'hi',match:/^\d{3}-\d{3}-\d{4}$/,error_msg:'Must be xxx-xxx-xxxx'},
-					'number': {type:'number',label:'Number',on_change:log_change,default:1,min:1,max:14},
-					'password': {type:'input',subtype:'password',label:'Password',on_change:log_change,validate:check_password},
-					'checkbox': {type:'checkbox',label:'Checkbox',on_change:log_change},
-					'color': {type:'color',label:'Color',no_save:true,default:'#ff2222',on_change:log_change},
-				}},
+			content: {
+				'tabs':{type:'tabset',content:{
+					'pg1':{type:'page',label:'page 1',hover_tip:'Page 1',content:{
+						'grp_group': {type:'group',label:'group',content:{
+							'section': {type:'section',label:'section'},
+							'dropdown': {type:'dropdown',label:'dropdown',on_change:log_change,content:{'val1':'Value 1','val2':'Value 2'}},
+							'list': {type:'list',label:'list',size:4,on_change:log_change,content:{'val1':'Value 1','val2':'Value 2','val3':'Value 3'}},
+							'multi': {type:'list',label:'list (multi)',multi:true,size:3,on_change:log_change,content:{'val1':'Value 1','val2':'Value 2','val3':'Value 3','val4':'Value 4','val5':'Value 5','val6':'Value 6'}},
+							'divider': {type:'divider'},
+							'text': {type:'text',label:'text',on_change:log_change,default:'hi',match:/^\d{3}-\d{3}-\d{4}$/,error_msg:'Must be xxx-xxx-xxxx'},
+							'number': {type:'number',label:'number',on_change:log_change,default:1,min:1,max:14},
+							'password': {type:'input',subtype:'password',label:'input (subtype="password")',on_change:log_change,validate:check_password},
+							'checkbox': {type:'checkbox',label:'checkbox',on_change:log_change},
+							'button': {type:'button',label:'button',text:'Open Settings',hover_tip:'button',on_click:button_clicked},
+							'color': {type:'color',label:'color',no_save:true,default:'#ff2222',on_change:log_change},
+						}},
+					}},
+					'pg2':{type:'page',label:'page 2',hover_tip:'Page 2',content:{
+					}}
+				}}
 			}
 		});
 		settings_dialog.load();
@@ -101,6 +105,14 @@ window.sample_client = {};
 	//-----------------------------------
 	function check_password(value) {
 		if (value.length < 8) return 'Must be 8 or more characters';
+	}
+
+	//-----------------------------------
+	// Click handler for a "button" setting.
+	//-----------------------------------
+	function button_clicked(name, config, callback) {
+		alert('A "button" setting was clicked');
+		callback();
 	}
 
 	//-----------------------------------

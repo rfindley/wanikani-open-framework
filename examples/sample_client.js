@@ -104,15 +104,15 @@ window.sample_client = {};
 
 		// The settings box configuration
 		wkof.Menu.insert_script_link({
-			name:      'timeln',
+			name:      'sample_client_1',
 			submenu:   'Settings',
-			title:     'Ultimate Timeline',
+			title:     'Sample Client 1',
 			on_click:  open_settings
 		});
 
 		// Insert some sample scripts.
 		wkof.Menu.insert_script_link({name:'appstore',title:'App Store',on_click:do_nothing});
-		wkof.Menu.insert_script_link({name:'sample_client',submenu:'Settings',title:'Sample Client',on_click:do_nothing});
+		wkof.Menu.insert_script_link({name:'sample_client_2',submenu:'Settings',title:'Sample Client 2',on_click:do_nothing});
 	}
 
 	//-----------------------------------
@@ -133,7 +133,7 @@ window.sample_client = {};
 			script_id: 'timeln',
 			title: 'Ultimate Timeline',
 			on_save: process_settings,
-			settings: {
+			content: {
 				'pg_graph': {type:'page',label:'Graph',content:{
 					'grp_General': {type:'group',label:'General',content:{
 						'location': {type:'dropdown',label:'Graph Location',content:{'bnr':'Before Next-Review','anr':'After Next-Review','asrs':'After SRS-Progress','alvl':'After Level-Progress','aunl':'After New-Unlocks','aforum':'After Recent-Topics'}},

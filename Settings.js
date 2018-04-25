@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.8
+// @version     1.0.9
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -20,12 +20,14 @@
 			self: this,
 			cfg: config,
 		}
+		if (!config.content) config.content = config.settings;
 
 		if (publish_context) this.context = context;
 
 		// Create public methods bound to context.
 		this.cancel = cancel_btn.bind(context, context);
 		this.open = open.bind(context, context);
+		this.close = close.bind(context, context);
 		this.load = load_settings.bind(context, context);
 		this.save = save_settings.bind(context, context);
 		this.refresh = refresh.bind(context, context);
@@ -54,9 +56,9 @@
 
 		var html = '', item, child_passback = {};
 		var id = context.cfg.script_id+'_dialog';
-		for (var name in context.cfg.settings) {
-			var item = context.cfg.settings[name];
-			html += parse_item(name, context.cfg.settings[name], child_passback);
+		for (var name in context.cfg.content) {
+			var item = context.cfg.content[name];
+			html += parse_item(name, context.cfg.content[name], child_passback);
 		}
 		if (child_passback.tabs)
 			html = assemble_pages(id, child_passback.tabs, child_passback.pages) + html;
@@ -158,7 +160,7 @@
 					value = get_value(context, base, name);
 					if (value === undefined) {
 						var is_number = (item.type==='number' || item.subtype==='number');
-						value = (item.default || (is_number==='number'?'0':''));
+						value = (item.default || (is_number==='number'?0:''));
 						set_value(context, base, name, value);
 					}
 					html += wrap_right('<input id="'+id+'" class="setting" type="'+itype+'" name="'+name+'"'+(item.placeholder?' placeholder="'+escape(item.placeholder)+'"':'')+'>');
@@ -180,7 +182,8 @@
 				case 'button':
 					context.config_list[name] = item;
 					html += make_label(item);
-					html += wrap_right('<button type="button" class="setting" name="'+name+'">Open Settings</button>');
+					var text = (item.text || 'Click').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+					html += wrap_right('<button type="button" class="setting" name="'+name+'">'+text+'</button>');
 					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
@@ -236,7 +239,7 @@
 			dialog.addClass('narrow');
 		}
 		dialog.dialog({
-			title: context.cfg.title+' Settings',
+			title: context.cfg.title,
 			buttons: [
 				{text:'Save',click:save_btn.bind(context,context)},
 				{text:'Cancel',click:cancel_btn.bind(context,context)}
@@ -345,9 +348,9 @@
 	//------------------------------
 	// Close and destroy the dialog.
 	//------------------------------
-	function close(context) {
+	function close(context, keep_settings) {
 		var dialog = $('#wkofs_'+context.cfg.script_id);
-		if (!context.keep_settings) {
+		if (!context.keep_settings && keep_settings !== true) {
 			// Revert settings
 			wkof.settings[context.cfg.script_id] = $.extend(true,{},context.reversions);
 			delete context.reversions;

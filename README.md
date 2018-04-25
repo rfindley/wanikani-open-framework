@@ -43,6 +43,28 @@ _[Disclaimer: This project is currently in early development, so changes are exp
   - [Progress](#progress_module)
     - [`update()`](#progress_update)
   - [Settings](#settings_module)
+    - [`save()`](#settings_save)
+    - [`load()`](#settings_load)
+    - [`new Settings()`](#settings_constructor)
+      - [`config`](#settings_config) _(parameter)_
+        - [`tabset`](#settings_config_tabset)
+        - [`page`](#settings_config_page)
+        - [`section`](#settings_config_section)
+        - [`divider`](#settings_config_divider)
+        - [`group`](#settings_config_group)
+        - [`list`](#settings_config_list)
+        - [`dropdown`](#settings_config_dropdown)
+        - [`checkbox`](#settings_config_checkbox)
+        - [`input`](#settings_config_input)
+        - [`number`](#settings_config_number)
+        - [`text`](#settings_config_text)
+        - [`color`](#settings_config_color)
+        - [`button`](#settings_config_button)
+        - [`html`](#settings_config_html)
+      - [`dialog`](#settings_dialog) _(return)_
+      - [Validating Inputs](#settings_validation)
+      - [Overriding Paths](#settings_paths)
+      - [Examples](#settings_examples)
 
 -----
 
@@ -1214,3 +1236,774 @@ function do_some_work() {
 
 ## <a id="settings_module">Settings module</a>
 
+The `Settings` module provides a simple way to create a Settings dialog for your script with minimal work.
+
+The module has the following members:
+* **`wkof.Settings()`** - A constructor function for creating a dialog object.
+* **`wkof.Settings.save()`** - A function for saving a script's stored settings.
+* **`wkof.Settings.load()`** - A function for loading a script's stored settings.
+
+Settings are stored in a per-script object under `wkof.settings` (note the lowercase 's').
+For example, a 'timeline' script's settings would be located in `wkof.settings.timeline`.
+
+To use the `Settings` module, you must include it from your script, and wait until the module is ready before accessing it:
+
+```javascript
+wkof.include('Settings');
+wkof.ready('Settings').then(do_something);
+
+function do_something() {
+    // TODO:  Add your code to access the Settings interface.
+    console.log('wkof.Settings is loaded');
+}
+```
+
+-----
+
+### <a id="settings_save">`wkof.Settings.save(script_id)`</a>
+
+Save the settings object located at `wkof.settings[script_id]` into storage.
+
+Settings are stored in `wkof.file_cache` under a file named `wkof.settings.[script_id]`.  For example, if your `script_id` is `"my_script"`, the filename in `wkof.file_cache` will be `"wkof.settings.my_script"`.
+
+#### Parameters:
+* **`script_id`** - A string that identifies the script whose settings are to be saved.
+
+#### Return value:
+* **`Promise`** - A Promise that resolves when the save is complete.
+
+#### _Example: Load settings for a sample script:_
+```javascript
+// Include the Settings module, and wait for it to be ready.
+wkof.include('Settings');
+wkof.ready('Settings').then(do_something);
+
+// This function is called when the Settings module is ready to use.
+function do_something() {
+    // Normally, you wouldn't save settings immediately upload load.  But for the
+    // save of having a working example, we will create some settings and save them.
+
+    wkof.settings.my_script = {};
+    wkof.settings.my_script.setting1 = 123;
+    wkof.settings.my_script.setting2 = 789;
+    wkof.Settings.save('my_script');
+
+    // The settings will be stored in 'wkof.file_cache'
+    // under a file named 'wkof.settings.my_script'
+}
+```
+
+-----
+
+### <a id="settings_load">`wkof.Settings.load(script_id [, defaults])`</a>
+
+Loads the specified script's settings from storage.
+The loaded settings are returned in the resolved promise, and also at `wkof.settings[script_id]`.
+
+The optional `defaults` object contains defaults that will be assigned to any corresponding settings that are missing in the stored settings.
+
+Settings are loaded from `wkof.file_cache` under a file named `wkof.settings.[script_id]`.  For example, if your `script_id` is `"my_script"`, the filename in `wkof.file_cache` will be `"wkof.settings.my_script"`.
+If no file is found, an empty object `{}` is returned.
+
+#### Parameters:
+* **`script_id`** - A string that identifies the script whose settings are to be loaded.
+* **`defaults`** - _(optional)_An object containing any default values that will be merged in the absence of their corresponding stored settings.
+
+#### Return value:
+* **`Promise`** - A Promise that resolves with the loaded settings.
+
+#### _Example: Load settings for a sample script:_
+```javascript
+// Suppose the following settings are currently in storage:
+// {setting1: 123, setting2: 789}
+
+// Include the Settings module, and wait for it to be ready.
+wkof.include('Settings');
+wkof.ready('Settings').then(load_settings);
+
+// This function is called when the Settings module is ready to use.
+function load_settings() {
+    var defaults = {
+      setting1: 50,
+      setting2: 50,
+      setting3: 50
+    };
+    wkof.Settings.load('my_script', defaults)
+    .then(process_settings);
+}
+
+function process_settings(settings) {
+    // For illustration, we will ignore the 'settings' object passed into this function,
+    // and will access the settings directly from wkof.settings['my_script'] instead.
+    console.log('setting1 = ' + wkof.settings.my_script.setting1);
+    console.log('setting2 = ' + wkof.settings.my_script.setting2);
+    console.log('setting3 = ' + wkof.settings.my_script.setting3);
+}
+
+// Output:
+//   setting1 = 123
+//   setting2 = 789
+//   setting3 = 50    <-- note default value
+```
+
+-----
+
+### <a id="settings_constructor">`new wkof.Settings(config)`</a>
+
+A constructor function for building a Settings dialog based on the specified `config` object.
+
+#### Parameters:
+* **`config`** - A configuration object describing the contents and behavior of the desired Settings dialog.
+
+#### Return value:
+* **`dialog`** - A dialog object, which has a set of member functions you can call _(see below)_.
+
+-----
+
+### <a id="settings_config">The `config` parameter</a>
+
+The following are the top-level contents of the `config` object.  A more detailed description of each member follows.
+
+```javascript
+var config = {
+    // Required members
+    script_id:  // A string ID for the script.  Settings are stored in wkof.settings[script_id].
+    title:      // A string that will appear in the Settings dialog's title.
+
+    // Optional flags
+    autosave:   // (optional) A boolean indicating whether changes are committed to storage (default: true)
+    background: // (optional) A boolean indicating whether a semi-transparent background is displayed (default: true)
+
+    // Optional callbacks
+    pre_open:   // (optional) A callback function, called when the dialog opens.
+    on_save:    // (optional) A callback function, called when the user clicks the Save button.
+    on_cancel:  // (optional) A callback function, called when the user clicks the Cancel button.
+    on_close:   // (optional) A callback function, called when the dialog closes.
+    on_change:  // (optional) A callback function, called when any setting changes.
+    on_refresh: // (optional) A callback function, called just after the dialog has been refreshed.
+
+    // Dialog content
+    content: {
+        // The content of the dialog box (i.e. layout and settings)
+        // [...]
+    }
+};
+```
+
+* **`script_id`** - A string ID for the script.  This is used as the name of the sub-object in `wkof.settings` where settings will be saved.  For example, if `script_id` is `"my_script"`, settings will be stored in `wkof.settings.my_script`.
+* **`title`** - A string title for the dialog box.
+* **`autosave`** - _(optional)_ If set to `false`, clicking the Save button does not save the settings to storage, though it does change the settings under `wkof.settings[script_id]`.  The default is `true`.
+* **`background`** - _(optional)_ If set to `false`, the semi-transparent background overlay will not be used.  The default is `true`.
+* **`pre_open()`** - _(optional)_ This callback is called just _after_ the dialog opens, but before `open()` returns.  The intent is to allow you to make final adjustment to the dialog, such as attaching custom event handlers or adding other custom features.
+
+  _Parameters_: `preopen_callback(dialog)`
+    - _`dialog`_ - The DOM element of the dialog box.
+* **`on_save()`** - _(optional)_ This callback is called just after the user clicks the Save button and the settings are saved to storage, and before the dialog box is closed.  The intent is to allow you to act upon any modified settings, including reading final states of dialog elements if necessary (though usually the framework captures changes automatically).
+
+  _Parameters_: `save_callback(settings)`
+    - _`settings`_ - The settings object (i.e. `wkof.settings[script_id]`)
+* **`on_cancel()`** - _(optional)_ This callback is called just after the user clicks the Cancel button and the settings are reverted, and before the dialog box is closed.  The intent is to allow you to act upon any reverted settings that may have been acted upon the `on_change` event of any individual settings.
+
+  _Parameters_: `close_callback(settings)`
+    - _`settings`_ - The settings object (i.e. `wkof.settings[script_id]`)
+* **`on_close()`** - _(optional)_ This callback is called just after the `on_save` or `on_cancel` event, or when the user closes the window via the X.  The intent is to have a common event regardless of the method by which the dialog is closed.
+
+  _Parameters_: `close_callback(settings)`
+    - _`settings`_ - The settings object (i.e. `wkof.settings[script_id]`)
+* **`on_change()`** - _(optional)_ This callback is called after the user modifies a setting in the dialog and the setting has passed validation (if any).  The intent is to allow you to immediately act upon a change while the dialog is still open, including dynamically modifying other settings in the dialog (e.g. enabling/disabling other fields).
+
+  _Parameters_: `change_callback(name, value, config)`
+    - _`name`_ - The name of the configuration sub-object for the changed setting.  For example, given a setting `max_height: {type:"number", label:"Maximum Height", default:10}`, the `name` is `"max_height"`.
+    - _`value`_ - The new value of the setting.
+    - _`config`_ - The configuration sub-object for the changed settings.  For example, `{type:"number", label:"Maximum Height", default:10}`.
+* **`on_refresh()`** - _(optional)_ This callback is called whenever a refresh of the dialog's interface has been requested, immediately after all automatically refreshed elements have been refreshed.  The intent is to allow you to refresh any custom elements in your dialog.<br>
+  A refresh occurs under the following circumstances:
+  - Immediately after the dialog opens, to populate the dialog with initial values from `wkof.settings[script_id]`.
+  - Whenever a setting marked with `refresh_on_change:true` is changed.
+  - Whenever your script calls `.refresh()` on your dialog object, such as after you have programmatically modified a setting in `wkof.settings[script_id]`.
+
+  _Parameters_: `refresh_callback(settings)`
+    - _`settings`_ - The settings object (i.e. `wkof.settings[script_id]`)
+
+* **`content`** - A sub-object containing a collection of components that define the contents of the Settings dialog.  These components are described in detail below.
+
+-----
+
+### <a id="settings_content">Settings `config.content` sub-object</a>
+
+The image below is the dialog box created by _settings\_demo.js_.  It illustrates the various built-in components supported by the Settings module.
+
+![Settings Demo dialog](docs/images/settings_demo.png)
+
+-----
+
+#### <a id="settings_config_tabset">Settings `tabset` component</a>
+
+The `tabset` component serves as a wrapper for a group of `page` components.
+
+The `tabset` itself does not have a visual representation, but the `page` components that it contains will each appear as a separate tab in a tabset.
+
+The `tabset` configuration is as follows:
+
+```javascript
+tabset_id: {
+    type: 'tabset',
+    content: {
+        // A collection of "page" objects.  For example:
+        // page1: {...},
+        // page2: {...}
+        // ...
+    }
+}
+```
+
+-----
+
+#### <a id="settings_config_page">Settings `page` component</a>
+
+The `page` component represents the contents of a single tab in a tabset.
+
+![Settings Page component](docs/images/settings_page.png)
+
+The `page` configuration is as follows:
+
+```javascript
+page_id: {
+    type: 'page',
+    label:         // A string label that will appear in the tab.
+    hover_tip:     // (optional) A string that will appear as a tool-tip when you hover over the tab label.
+    content: {
+        // A collection of settings components that will appear in the open tab.  For example:
+        // dropdown1: {...},
+        // text1: {...},
+        // text2: {...},
+        // ...
+    }
+}
+```
+
+-----
+
+#### <a id="settings_config_section">Settings `section` component</a>
+
+The `section` component draws a labeled section header.
+
+![Settings Section component](docs/images/settings_section.png)
+
+The `section` configuration is as follows:
+
+```javascript
+section_id: {
+    type: 'section',
+    label:           // A string that will appear in the section.
+}
+```
+
+-----
+
+#### <a id="settings_config_divider">Settings `divider` component</a>
+
+The `divider` component draws a horizontal divider line to visually separate components.
+
+![Settings Divider component](docs/images/settings_divider.png)
+
+The `divider` configuration is as follows:
+
+```javascript
+divider_id: {
+    type: 'divider'
+}
+```
+
+-----
+
+#### <a id="settings_config_group">Settings `group` component</a>
+
+The `group` component visually groups a set of related components together.
+
+![Settings Group component](docs/images/settings_group.png)
+
+The `group` configuration is as follows:
+
+```javascript
+group_id: {
+    type: 'group',
+    label:           // A string label that will appear at the top-left of the group.
+    content: {
+        // A collection of settings components that will appear inside the group border.  For example:
+        // dropdown1: {...},
+        // text1: {...},
+        // text2: {...},
+        // ...
+    }
+}
+```
+
+-----
+
+#### <a id="settings_config_list">Settings `list` component</a>
+
+The `list` component allows you to select items from a list.  The default configuration allows selection of a single item.  Adding the `multi:true` parameter enables selection of multiple items.
+
+![Settings list component](docs/images/settings_list.png)
+
+The value stored by a single-select `list` is the key name of the selected item:
+```javascript
+// Single-select list value
+> wkof.settings.list_name;
+"key1"
+```
+
+![Settings multi list component](docs/images/settings_list_multi.png)
+
+The value stored by a multi-select `list` is an object whose keys are the key names of the list items, each having a boolean value of `true` if selected, or `false` if not selected:
+```javascript
+// Multi-select list value
+> wkof.settings[list_id];
+{key1: true, key2: true, key3: false}
+```
+
+The `list` configuration is as follows:
+
+```javascript
+list_id: {
+    type: 'list',
+    label:          // A string label that appears to the left of (or above) the list element.
+    multi:          // (optional) A boolean that, if true, allows selection of multiple list items.
+    size:           // (optional) An integer size indicating the height of the list in lines (default = 4).
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the list.
+    default:        // (optional) A string containing the key of the list item that will be selected by default.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+    content: {
+        // A set of key/text pairs representing the available selections.  For example:
+        // key1: 'Value 1',
+        // key2: 'Value 2',
+        // [...]
+    }
+}
+```
+
+-----
+
+#### <a id="settings_config_dropdown">Settings `dropdown` component</a>
+
+The `dropdown` component allows you to select an item from a drop-down list.
+
+![Settings dropdown component](docs/images/settings_dropdown.png)
+
+The value stored by a `dropdown` is the key name of the selected item:
+```javascript
+// Dropdown value
+> wkof.settings[dropdown_id];
+"key1"
+```
+
+The `dropdown` configuration is as follows:
+
+```javascript
+dropdown_id: {
+    type: 'dropdown',
+    label:          // A string label that appears to the left of (or above) the dropdown element.
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the dropdown.
+    default:        // (optional) A string containing the key of the dropdown item that will be selected by default.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+    content: {
+        // A set of key/text pairs representing the available selections.  For example:
+        // key1: 'Value 1',
+        // key2: 'Value 2',
+        // [...]
+    }
+}
+```
+
+-----
+
+#### <a id="settings_config_checkbox">Settings `checkbox` component</a>
+
+The `checkbox` component displays a checkbox representing a boolean setting.
+
+![Settings checkbox component](docs/images/settings_checkbox.png)
+
+The value stored by a `checkbox` is a boolean value `true` or `false`:
+```javascript
+// Checkbox value
+> wkof.settings[checkbox_id];
+true
+```
+
+The `checkbox` configuration is as follows:
+
+```javascript
+checkbox_id: {
+    type: 'checkbox',
+    label:          // A string label that appears to the left of (or above) the checkbox element.
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the checkbox.
+    default:        // (optional) A boolean containing the name of the checkbox item that will be selected by default.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+}
+```
+
+-----
+
+#### <a id="settings_config_input">Settings `input` component</a>
+
+The `input` component represents an \<input\> tag.  By default, its HTML type will be `type="text"`, but you can specify a different type using the `subtype` parameter.
+
+![Settings text component](docs/images/settings_text.png)
+
+The value stored by an `input` depends on its subtype.  Numbers will store a number, and all others will store a string:
+```javascript
+// Input value
+> wkof.settings[input_id];
+"hi"
+```
+
+The `input` configuration is as follows:
+
+```javascript
+input_id: {
+    type: 'input',
+    subtype:        // (optional) A string containing the HTML type to assign to the <input> tag.  The default is 'text'.
+    label:          // A string label that appears to the left of (or above) the input element.
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the input.
+    placeholder:    // (optional) A string that will appear as a placeholder when the input is empty, e.g. "Full Name".
+    default:        // (optional) A string containing the default value to appear in the input.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+}
+```
+
+-----
+
+#### <a id="settings_config_number">Settings `number` component</a>
+
+The `number` component represents an \<input\> tag with HTML attribute `type="number"`.
+
+![Settings number component](docs/images/settings_number.png)
+
+The value stored by an `number` is a number.
+```javascript
+// Number value
+> wkof.settings[number_id];
+1
+```
+
+The `number` configuration is as follows:
+
+```javascript
+number_id: {
+    type: 'number',
+    label:          // A string label that appears to the left of (or above) the number element.
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the number field.
+    placeholder:    // (optional) A string that will appear as a placeholder when the field is empty, e.g. "Age".
+    default:        // (optional) A default number to appear in the field if no prior setting is present.
+    min:            // (optional) The minimum value accepted in the input.  Adds automatic validation.
+    max:            // (optional) The maximum value accepted in the input.  Adds automatic validation.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+}
+```
+
+-----
+
+#### <a id="settings_config_text">Settings `text` component</a>
+
+The `text` component represents an \<input\> tag with HTML attribute `type="text"`.
+
+![Settings text component](docs/images/settings_text.png)
+
+The value stored by an `text` is a string.
+```javascript
+// Text value
+> wkof.settings[text_id];
+"hi"
+```
+
+The `text` configuration is as follows:
+
+```javascript
+text_id: {
+    type: 'text',
+    label:          // A string label that appears to the left of (or above) the text element.
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the text field.
+    placeholder:    // (optional) A string that will appear as a placeholder when the field is empty, e.g. "Full Name".
+    default:        // (optional) A string containing the default value to appear in the input.
+    match:          // (optional) A regex object for validating the text.  Adds automatic validation.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+}
+```
+
+-----
+
+#### <a id="settings_config_color">Settings `color` component</a>
+
+The `color` component allows you to select a color from a pop-up color selection dialog.
+
+![Settings color component](docs/images/settings_color.png)
+
+The value stored by an `color` is a string representing the color in "#rrggbb" format.
+```javascript
+// Color value
+> wkof.settings[color_id];
+"#ff2222"
+```
+
+The `color` configuration is as follows:
+
+```javascript
+color_id: {
+    type: 'color',
+    label:          // A string label that appears to the left of (or above) the color element.
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the color element.
+    default:        // (optional) A string containing the default color.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+}
+```
+
+-----
+
+#### <a id="settings_config_button">Settings `button` component</a>
+
+The `button` component is a clickable button.  Its intent is to allow you to open a separate dialog for complex settings, or to trigger an action to be executed (e.g. reset to defaults).
+
+![Settings button component](docs/images/settings_button.png)
+
+The `button` component does not store a value.  However, you can store a value from within your click callback function.  If you do so, be sure to call the `on_change` function passed as a parameter to your `on_click` callback _(see below)_.
+
+The `button` configuration is as follows:
+
+```javascript
+button_id: {
+    type: 'button',
+    label:          // A string label that appears to the left of (or above) the button.
+    text:           // (optional) A string label that appears inside the button.  The default is "Click".
+    hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the button.
+    full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
+    validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
+    on_change:      // (optional) A callback that will be called when the setting changes.
+    path:           // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
+    on_click:       // A callback function that will be called when the button is clicked.
+}
+```
+
+The `on_click` callback function has the following signature:
+```javascript
+click_callback(name, config, on_change)
+```
+_Parameters:_
+* _`name`_ - The name of the configuration sub-object for the clicked `button` setting.  For example, given a setting `filter_btn: {type:"button", label:"Filter Settings", on_click:open_filter_Settings}`, the `name` is `"filter_btn"`.
+* _`config`_ - The configuration sub-object for the clicked `button` settings.  For example, `{type:"button", label:"Filter Settings", on_click: open_filter_settings}`.
+* _`on_change`_ - A callback function that you should call if you changed a setting from within your click handler.  This notifies the framework that a setting has changed.
+
+-----
+
+#### <a id="settings_config_html">Settings `html` component</a>
+
+The `html` component allows you to place custom HTML inline in the Settings dialog.
+
+The `html` component does not store a value.  However, you can attach event handlers to the `html` via the global `pre_open` callback.
+
+You can use the global `pre_open` handler to:
+* Perform any initialization on the html
+* Attach event handlers to your html
+
+The `html` configuration is as follows:
+
+```javascript
+html_id: {
+    type: 'html',
+    label:          // (optional) A string label that appears to the left of (or above) the inline html.
+    html:           // An html string to be inserted inline.
+}
+```
+
+-----
+
+### <a id="settings_validation">Validating Inputs</a>
+
+The `Settings` module provides two ways of validating inputs in the Settings dialog.
+
+#### Automatic validation
+
+Input types `number` and `text` have their own set of automatic validation fields.
+
+* _`number`_:
+  - **`min`** - The minimum numeric value allowed.
+  - **`max`** - The maximum numeric value allowed.
+
+* _`text`_:
+  - **`match`** - A regex that the input text should match.
+
+#### Custom validation
+
+All setting types (except `button` and `html`) support a `validate` callback.
+
+The `validate` callback has the following signature:
+
+validate_callback(value, config)
+  - _value_ - The value to be validated.
+  - _config_ - The configuration sub-object for the setting that changed.
+
+The value that you return from the callback can take any of three forms:
+
+* A boolean, where `true` indicates that the input is valid.
+* A string containing a message to display beneath the input.  If a string is returned, the input is considered invalid.
+* An object containing two fields:
+```javascript
+{
+    valid:  // A boolean, where 'true' indicates that the input is valid
+    msg:    // A string to be displayed beneath the input.
+}
+```
+If an object is returned, it is possible to display a message while still indicating that the input is valid.  This could be used for non-invalidating warnings.
+
+-----
+
+### <a id="settings_paths">Overriding Paths</a>
+
+By default, settings are saved as a flat structure inside `wkof.settings[script_id]`.  For example:
+```javascript
+> wkof.settings.my_script
+{
+    active_preset: 0,
+    preset0_item_type: 'radical',
+    preset0_level: '1..5',
+    preset1_item_type: 'kanji',
+    preset1_level: '6..10',
+}
+```
+
+Suppose you want to provide more structure in your saved settings:
+```javascript
+> wkof.settings.my_script
+{
+    active_preset: 0,
+    presets: {
+        0: {item_type: 'radical', level: '1..5'},
+        1: {item_type: 'kanji', level: '6..10'},
+    }
+}
+```
+
+To make this happen, you can override the default path using the `path` parameter.
+
+For example, suppose you have three components in your Settings dialog:
+* active_preset - A drop-down indicating which of two presets is active.
+* type - A Wanikani item type (radical, kanji, or vocabulary).
+* levels - A string indicating a range of Wanikani levels.
+
+If you want to save the `type` and `levels` fields of your dialog into the preset indicated by `active_preset`, you can set the path for those two fields using a configuration similar to the following:
+```javascript
+active_preset: {type:'dropdown', default:'0', content:{0:'preset 0', 1:'preset 1'}},
+item_type:     {type:'dropdown', path:'@presets[@active_preset].item_type'},
+levels:        {type:'text',     path:'@presets[@active_preset].level'    }
+```
+
+The `@` character is a shortcut for `wkof.settings[script_id].`.
+
+-----
+
+### <a id="settings_dialog">The returned `dialog` object</a>
+
+The returned `dialog` object has a member function `open()`:
+* **`open()`** - Opens the dialog.  In many cases, this is the only function you will need to use.
+
+The `dialog` object also contains shortcuts for saving and loading settings from storage.
+* **`load()`** - Equivalent to wkof.Settings.load(script_id), without having to specify the `script_id`.  Does not affect the dialog.
+* **`save()`** - Equivalent to wkof.Settings.save(script_id), without having to specify the `script_id`.  Does not affect the dialog.
+
+Sometimes, a complex dialog box will require custom interface code, which in turn may require refreshing the dialog box.
+* **`refresh()`** - Updates the dialog based on the contents of `wkof.settings[script_id]`.  This is useful when your script changes a setting programmatically, and the dialog needs to be refreshed to reflect the change.
+
+Lastly, some additional members that are generally only used internally:
+* **`background`** - A sub-object allowing you to open or close a semi-transparent background behind the Settings dialog.<br>
+  Normally, you do not need to use this object, since the background is opened and closed automatically.  The background is enabled by default, but can be disabled by setting `background:false` in the `config` object.
+  - **`open()`** - Opens the background.  _(Normally, this is handled automatically)_
+  - **`close()`** - Closes the background.  _(Normally, this is handled automatically)_
+* **`close()`** - Closes the dialog.  And optional `true` parameter specifies whether to save any pending changes.  _(Normally, the user closes the dialog)_
+* **`cancel()`** - Closes the dialog, canceling any changes made to the settings.  _(Normally, the user decides whether to cancel the dialog)_
+
+-----
+
+### <a id="settings_examples">Examples</a>
+
+#### _Example: Simple dialog with a single setting:_
+
+```javascript
+// Install a link in the Wanikani menu for opening our settings.
+// Then load our saved settings.
+wkof.include('Menu,Settings');
+wkof.ready('Menu,Settings')
+.then(install_menu)
+.then(load_settings)
+.then(startup);
+
+// Install our link under [Scripts -> Demo -> Settings Demo]
+function install_menu() {
+    wkof.Menu.insert_script_link({
+        name:      'settings_demo_01',
+        submenu:   'Demo',
+        title:     'Settings Demo 01',
+        on_click:  open_settings
+    });
+}
+
+// Load our saved settings from storage.
+function load_settings() {
+    // We 'return' the Promise from wkof.Settings.load(), so
+    // init_settings() will wait until the settings are loaded.
+    console.log('Loading settings...');
+    return wkof.Settings.load('my_script');
+}
+
+// This is called after our settings are loaded.
+function startup() {
+    // TODO: Initialize our script with our loaded settings.
+    console.log('Settings are loaded!  Initializing...');
+}
+
+// This is called when the user clicks the "Settings Demo" link in the menu.
+function open_settings() {
+    var config = {
+        script_id: 'settings_demo_01',
+        title: 'Settings Demo 01',
+        on_save: update_settings,
+        content: {
+            max_apprentice: {
+                type: 'number',
+                label: 'Maximum Apprentice Items',
+                default: 100,
+                hover_tip: 'The maximum number of apprentice items to allow.',
+            },
+        }
+    }
+    var dialog = new wkof.Settings(config);
+    dialog.open();
+}
+
+// Called when the user clicks the Save button on the Settings dialog.
+function update_settings() {
+    // TODO: Update whatever needs updating based on changed settings.
+    console.log('Settings saved!');
+    console.log('New maximum is ' + wkof.settings.settings_demo_01.max_apprentice);
+}
+```
