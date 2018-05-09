@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.26
+// @version     1.0.27
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.26';
+	var version = '1.0.27';
 
 	//########################################################################
 	//------------------------------
@@ -380,9 +380,11 @@
 			var del_promise = promise();
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
-			if (!pattern instanceof RegExp) pattern = new RegExp('^'+pattern+'$');
 			var files = Object.keys(wkof.file_cache.dir).filter(function(file){
-				return file.match(pattern) !== null;
+				if (pattern instanceof RegExp)
+					return file.match(pattern) !== null;
+				else
+					return (file === pattern);
 			});
 			files.forEach(function(file){
 				store.delete(file)
@@ -474,6 +476,7 @@
 		var threshold = new Date() - 14*86400000; // 14 days
 		var old_files = [];
 		for (var fname in wkof.file_cache.dir) {
+			if (fname.match(/^wkof\.settings\./)) continue; // Don't flush settings files.
 			var fdate = new Date(wkof.file_cache.dir[fname].last_loaded);
 			if (fdate < threshold) old_files.push(fname);
 		}
