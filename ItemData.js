@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.10
+// @version     1.0.11
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -156,6 +156,14 @@
 				invert: (filter_cfg.invert === true)
 			});
 		}
+		if (options.include_hidden !== true) {
+			filters.push({
+				name: 'remove_deleted',
+				func: function(filter_value, item){return item.data.hidden_at === null;},
+				filter_value: true,
+				invert: false
+			});
+		}
 
 		return Promise.all(prep_promises).then(function(){
 			var result = [];
@@ -302,6 +310,7 @@
 	make_index_func('srs_stage', 'item.assignments.srs_stage', 'array');
 	make_index_func('srs_stage_name', 'item.assignments.srs_stage_name', 'array');
 	make_index_func('subject_id', 'item.id', 'single');
+
 
 	//------------------------------
 	// Index by reading

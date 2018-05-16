@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.27
+// @version     1.0.28
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.27';
+	var version = '1.0.28';
 
 	//########################################################################
 	//------------------------------
@@ -21,7 +21,7 @@
 	//------------------------------
 	var supported_modules = {
 		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=266930'},
-		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=266242'},
+		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=597938'},
 		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=260444'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=262841'},
 		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=267483'},
@@ -76,7 +76,7 @@
 	// Compare the framework version against a specific version.
 	//------------------------------
 	function compare_to(client_version) {
-		var client_ver = client_version.split('.').map(d => Number(d))
+		var client_ver = client_version.split('.').map(d => Number(d));
 		var wkof_ver = version.split('.').map(d => Number(d));
 		var len = Math.max(client_ver.length, wkof_ver.length);
 		for (var idx = 0; idx < len; idx++) {
@@ -387,7 +387,7 @@
 					return (file === pattern);
 			});
 			files.forEach(function(file){
-				store.delete(file)
+				store.delete(file);
 				delete wkof.file_cache.dir[file];
 			});
 			file_cache_dir_save();

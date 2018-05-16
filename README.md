@@ -631,6 +631,7 @@ For `wk_items`, the following options are available:
 * **`assignments`** - If `true`, add info from the `/assignments` endpoint to each item.  (Default is `false`).
 * **`review_statistics`** - If `true`, add info from the `/review_statistics` endpoint to each item.  (Default is `false`).
 * **`study_materials`** - If `true`, add info from the `/study_materials` endpoint to each item.  (Default is `false`).
+* **`include_hidden`** - If `true`, include items that have been hidden (i.e. deleted) by Wanikani.  (Default is `false`).
 
 For example, the following configuration will fetch the `/subjects`, `/assignments`, and `/review_statistics` endpoints. (Note: The `/subjects` endpoint will always be fetched, since all other endpoints reference the subject data).
 
