@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.28
+// @version     1.0.29
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,7 +13,8 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.28';
+	var version = '1.0.29';
+	var ignore_missing_indexeddb = false;
 
 	//########################################################################
 	//------------------------------
@@ -328,7 +329,17 @@
 		request = indexedDB.open('wkof.file_cache');
 		request.onupgradeneeded = upgrade_db;
 		request.onsuccess = get_dir;
+		request.onerror = error;
 		return open_promise;
+
+		function error() {
+			console.log('indexedDB could not open!');
+			wkof.file_cache.dir = {};
+			if (ignore_missing_indexeddb)
+				open_promise.resolve(null);
+			else
+				open_promise.reject();
+		}
 
 		function upgrade_db(event){
 			var db = event.target.result;
@@ -363,6 +374,7 @@
 		function clear(db) {
 			var clear_promise = promise();
 			wkof.file_cache.dir = {};
+			if (db === null) return clear_promise.resolve();
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
 			store.clear();
@@ -378,6 +390,7 @@
 
 		function del(db) {
 			var del_promise = promise();
+			if (db === null) return del_promise.resolve();
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
 			var files = Object.keys(wkof.file_cache.dir).filter(function(file){
@@ -438,6 +451,7 @@
 
 		function save(db) {
 			var save_promise = promise();
+			if (db === null) return save_promise.resolve(name);
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
 			store.put({name:name,content:content});
