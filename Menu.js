@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.1
+// @version     1.0.2
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -57,12 +57,17 @@
 		return a.querySelector('a').innerText.localeCompare(b.querySelector('a').innerText);
 	}
 
+	// Conversion functions for quotation mark character
+	function escapeQuotesEncode (str){ return String(str).replace(/\"/g, "&quot;"); }
+	function escapeQuotesBackslash (str){ return String(str).replace(/\"/g, "\\\""); }
+	function escapeJQuerySelector (str){return String(str).replace( /(!|\"|#|%|&|\'|,|-|:|;|<|=|>|@|`|~|\\|\/|\^|\$|\.|\||\?|\*|\+|\(|\)|\[|\]|\{|\})/g, "\\$1" ); }
+	
 	//------------------------------
 	// Install Submenu, if not present.
 	//------------------------------
-	function install_scripts_submenu(name) {
+  function install_scripts_submenu(name) {
 		// Abort if already installed.
-		if ($('.scripts-submenu[name="'+name+'"]').length !== 0) return false;
+		if ($('.scripts-submenu[name="'+ escapeQuotesBackslash(name) +'"]').length !== 0) return false;
 
 		// Install css and html.
 		if ($('style[name="scripts_submenu"]').length === 0) {
@@ -87,8 +92,8 @@
 			);
 		}
 		$('.scripts-header').after(
-			'<li class="scripts-submenu" name="'+name+'">'+
-			'  <a href="#">'+name+'</a>'+
+			'<li class="scripts-submenu" name="'+ escapeQuotesEncode(name) +'">'+
+			'  <a href="#">'+ escapeQuotesEncode(name) +'</a>'+
 			'  <ul class="dropdown-menu">'+
 			'  </ul>'+
 			'</li>'
@@ -103,20 +108,20 @@
 	//------------------------------
 	function insert_script_link(config) {
 		// Abort if the script already exists
-		var link_id = config.name+'_script_link'; 
+		var link_id = escapeJQuerySelector(config.name) +'_script_link';
 		if ($('#'+link_id).length !== 0) return;
 		install_scripts_header();
 		if (config.submenu) {
 			install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			var menu = $('.scripts-submenu[name="'+config.submenu+'"] .dropdown-menu');
+			var menu = $('.scripts-submenu[name="'+ escapeQuotesBackslash(config.submenu) +'"] .dropdown-menu');
 			var class_html = (config.class ? ' class="'+config.class+'"': '');
-			menu.append('<li id="'+link_id+'" name="'+config.name+'"'+class_html+'><a href="#">'+config.title+'</a></li>');
+			menu.append('<li id="'+link_id+'" name="'+ escapeQuotesEncode(config.name) +'"'+class_html+'><a href="#">'+ escapeQuotesEncode(config.title)+'</a></li>');
 			menu.append(menu.children().sort(sort_name));
 		} else {
 			var class_html = (config.class ? ' '+classes:'');
-			$('.scripts-header').after('<li id="'+link_id+'" name="'+config.name+'" class="script-link '+class_html+'"><a href="#">'+config.title+'</a></li>');
+			$('.scripts-header').after('<li id="'+  link_id +'" name="'+escapeQuotesEncode(config.name)+'" class="script-link '+class_html+'"><a href="#">'+ escapeQuotesEncode(config.title)+'</a></li>');
 			var items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
 			$('.scripts-header').after(items);
 		}
@@ -139,4 +144,3 @@
 	}
 
 })(window);
-
