@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.29
+// @version     1.0.30
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -188,7 +188,7 @@
 
 		function process_result(event){
 			if (event.target.readyState !== 4) return;
-			if (event.target.status >= 400 || event.target.status === 0) return reject(event.target.status);
+			if (event.target.status >= 400 || event.target.status === 0) return fetch_promise.reject(event.target.status);
 			if (use_cache) {
 				file_cache_save(url, event.target.response)
 				.then(fetch_promise.resolve.bind(null,event.target.response));
