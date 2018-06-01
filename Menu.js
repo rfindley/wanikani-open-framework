@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.1
+// @version     1.0.2
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -17,6 +17,9 @@
 		insert_script_link: insert_script_link
 	};
 	//########################################################################
+
+	function escape_attr(attr) {return attr.replace(/"/g,'\'');}
+	function escape_text(text) {return text.replace(/[<&>]/g, function(ch) {var map={'<':'&lt','&':'&amp;','>':'&gt;'}; return map[ch];});}
 
 	//------------------------------
 	// Install 'Scripts' header in menu, if not present.
@@ -62,7 +65,10 @@
 	//------------------------------
 	function install_scripts_submenu(name) {
 		// Abort if already installed.
-		if ($('.scripts-submenu[name="'+name+'"]').length !== 0) return false;
+		var safe_name = escape_attr(name);
+		var safe_text = escape_text(name);
+		var submenu = $('.scripts-submenu[name="'+safe_name+'"]');
+		if (submenu.length > 0) return submenu;
 
 		// Install css and html.
 		if ($('style[name="scripts_submenu"]').length === 0) {
@@ -86,16 +92,17 @@
 				'</style>'
 			);
 		}
-		$('.scripts-header').after(
-			'<li class="scripts-submenu" name="'+name+'">'+
-			'  <a href="#">'+name+'</a>'+
+		submenu = $(
+			'<li class="scripts-submenu" name="'+safe_name+'">'+
+			'  <a href="#">'+safe_text+'</a>'+
 			'  <ul class="dropdown-menu">'+
 			'  </ul>'+
 			'</li>'
 		);
+		$('.scripts-header').after(submenu);
 		var items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
 		$('.scripts-header').after(items);
-		return true;
+		return submenu;
 	}
 
 	//------------------------------
@@ -104,19 +111,20 @@
 	function insert_script_link(config) {
 		// Abort if the script already exists
 		var link_id = config.name+'_script_link'; 
+		var link_text = escape_text(config.title);
 		if ($('#'+link_id).length !== 0) return;
 		install_scripts_header();
 		if (config.submenu) {
-			install_scripts_submenu(config.submenu);
+			var submenu = install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			var menu = $('.scripts-submenu[name="'+config.submenu+'"] .dropdown-menu');
+			var menu = submenu.find('.dropdown-menu');
 			var class_html = (config.class ? ' class="'+config.class+'"': '');
-			menu.append('<li id="'+link_id+'" name="'+config.name+'"'+class_html+'><a href="#">'+config.title+'</a></li>');
+			menu.append('<li id="'+link_id+'" name="'+config.name+'"'+class_html+'><a href="#">'+link_text+'</a></li>');
 			menu.append(menu.children().sort(sort_name));
 		} else {
 			var class_html = (config.class ? ' '+classes:'');
-			$('.scripts-header').after('<li id="'+link_id+'" name="'+config.name+'" class="script-link '+class_html+'"><a href="#">'+config.title+'</a></li>');
+			$('.scripts-header').after('<li id="'+link_id+'" name="'+config.name+'" class="script-link'+class_html+'"><a href="#">'+link_text+'</a></li>');
 			var items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
 			$('.scripts-header').after(items);
 		}

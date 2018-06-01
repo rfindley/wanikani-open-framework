@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.9
+// @version     1.0.10
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -132,7 +132,7 @@
 					}
 					html = '<select id="'+id+'" name="'+name+'" class="'+classes+'"'+attribs+to_title(item.hover_tip)+'>';
 					for (cname in item.content)
-						html += '<option name="'+cname+'">'+escape(item.content[cname])+'</option>';
+						html += '<option name="'+cname+'">'+escape_text(item.content[cname])+'</option>';
 					html += '</select>';
 					html = make_label(item) + wrap_right(html);
 					html = wrap_row(html, item.full_width, item.hover_tip);
@@ -163,7 +163,7 @@
 						value = (item.default || (is_number==='number'?0:''));
 						set_value(context, base, name, value);
 					}
-					html += wrap_right('<input id="'+id+'" class="setting" type="'+itype+'" name="'+name+'"'+(item.placeholder?' placeholder="'+escape(item.placeholder)+'"':'')+'>');
+					html += wrap_right('<input id="'+id+'" class="setting" type="'+itype+'" name="'+name+'"'+(item.placeholder?' placeholder="'+escape_text(item.placeholder)+'"':'')+'>');
 					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
@@ -182,7 +182,7 @@
 				case 'button':
 					context.config_list[name] = item;
 					html += make_label(item);
-					var text = (item.text || 'Click').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+					var text = escape_text(item.text || 'Click');
 					html += wrap_right('<button type="button" class="setting" name="'+name+'">'+text+'</button>');
 					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
@@ -218,7 +218,7 @@
 		function wrap_row(html,full,hover_tip) {return '<div class="row'+(full?' full':'')+'"'+to_title(hover_tip)+'>'+html+'</div>';}
 		function wrap_left(html) {return '<div class="left">'+html+'</div>';}
 		function wrap_right(html) {return '<div class="right">'+html+'</div>';}
-		function escape(text) {return text.replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+		function escape_text(text) {return text.replace(/[<&>]/g, function(ch) {var map={'<':'&lt','&':'&amp;','>':'&gt;'}; return map[ch];});}
 		function to_title(tip) {if (!tip) return ''; return ' title="'+tip.replace(/"/g,'&quot;')+'"';}
 	}
 
