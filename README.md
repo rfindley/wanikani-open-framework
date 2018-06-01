@@ -1214,22 +1214,30 @@ function do_something() {
     // Initialize the progress bar.
     progress.value = 0;
     wkof.Progress.update(progress);
-
+	
     // Simulate some work
     do_some_work();
 }
-
 function do_some_work() {
-    // Simulate 250ms worth of work.
-    setTimeout(function() {
-        // Update the progress bar.
-        progress.value += 500;
+    // Add at most 500 value every 250ms
+    var workDone = function(t){
+      var amount = 500;
+      var duration = 250;
+      return (Math.random()>0.5?1:0) * t * amount/duration;
+    }
+
+    var startTime = stepTime = performance.now();
+    function step(ts) {
+        // Update the progress bar with simulated value
+        progress.value += workDone(ts - stepTime);
+        stepTime = ts;
         wkof.Progress.update(progress);
 
         // Check if we have more work
         if (progress.value < progress.max)
-            do_some_work();
-    }, 250);
+          requestAnimationFrame(step);
+    };
+   	requestAnimationFrame(step);
 }
 ```
 
