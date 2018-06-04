@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.31
+// @version     1.0.32
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.31';
+	var version = '1.0.32';
 	var ignore_missing_indexeddb = false;
 
 	//########################################################################
@@ -425,7 +425,7 @@
 			var transaction = db.transaction('files', 'readonly');
 			var store = transaction.objectStore('files');
 			var request = store.get(name);
-			wkof.file_cache.dir[name].last_loaded = new Date().toLocaleString();
+			wkof.file_cache.dir[name].last_loaded = new Date().toISOString();
 			file_cache_dir_save();
 			request.onsuccess = finish;
 			request.onerror = error;
@@ -456,7 +456,7 @@
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
 			store.put({name:name,content:content});
-			var now = new Date().toLocaleString();
+			var now = new Date().toISOString();
 			wkof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
 			file_cache_dir_save(true /* immediately */);
 			transaction.oncomplete = save_promise.resolve.bind(null, name);
