@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.32
+// @version     1.0.33
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.32';
+	var version = '1.0.33';
 	var ignore_missing_indexeddb = false;
 
 	//########################################################################
@@ -23,9 +23,9 @@
 	var supported_modules = {
 		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=266930'},
 		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=597938'},
-		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=601472'},
+		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=606859'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=601473'},
-		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=601474'},
+		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=606860'},
 	};
 
 	//########################################################################
@@ -63,7 +63,7 @@
 
 	published_interface.support_files = {
 		'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/0c414bb4bc8ecaee35d4ee7463eadc5816d69504/jqui-wkmain.css',
+		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/1550af8383ec28ad406cf401aee2de4c52446f6c/jqui-wkmain.css',
 	};
 
 	//########################################################################

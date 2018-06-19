@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.10
+// @version     1.0.11
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -468,7 +468,7 @@
 		}
 
 		// Style for valid/invalid
-		var parent = elem.closest('.row');
+		var parent = elem.closest('.right');
 		parent.find('.note').remove();
 		if (typeof valid.msg === 'string' && valid.msg.length > 0)
 			parent.append('<div class="note'+(valid.valid?'':' error')+'">'+valid.msg+'</div>');
