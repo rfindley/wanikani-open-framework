@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.33
+// @version     1.0.34
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.33';
+	var version = '1.0.34';
 	var ignore_missing_indexeddb = false;
 
 	//########################################################################
@@ -22,10 +22,10 @@
 	//------------------------------
 	var supported_modules = {
 		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=266930'},
-		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=597938'},
+		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=607872'},
 		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=606859'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=601473'},
-		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=606860'},
+		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=607871'},
 	};
 
 	//########################################################################
@@ -44,6 +44,7 @@
 			dir:    {},                // Object containing directory of files.
 			clear:  file_cache_clear,  // clear()             => Promise
 			delete: file_cache_delete, // delete(name)        => Promise
+			flush:  file_cache_flush,  // flush()             => Promise
 			load:   file_cache_load,   // load(name)          => Promise
 			save:   file_cache_save    // save(name, content) => Promise
 		},
@@ -408,6 +409,13 @@
 			transaction.oncomplete = del_promise.resolve.bind(null, files);
 			return del_promise;
 		}
+	}
+
+	//------------------------------
+	// Force immediate save of file_cache directory.
+	//------------------------------
+	function file_cache_flush() {
+		file_cache_dir_save(true /* immediately */);
 	}
 
 	//------------------------------

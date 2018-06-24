@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.11
+// @version     1.0.12
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -237,7 +237,7 @@
 			level: {
 				type: 'text',
 				label: 'Level',
-				placeholder: '(e.g. &quot;1..3,5&quot;)',
+				placeholder: '(e.g. "1..3,5")',
 				default: '',
 				filter_value_map: levels_to_arr,
 				filter_func: function(filter_value, item){return filter_value[item.data.level] === true;},
@@ -392,7 +392,7 @@
 			var value = true;
 
 			// Match '*' = all levels
-			var match = crit.match(/^\s*(\*)\s*$/);
+			var match = crit.match(/^\s*["']?\s*(\*)\s*["']?\s*$/);
 			if (match !== null) {
 				start = to_num('1');
 				stop = to_num('9999'); // All levels
@@ -402,7 +402,7 @@
 			}
 
 			// Match 'a..b' = range of levels (or exclude if preceded by '!')
-			match = crit.match(/^\s*(\!?)\s*((\+|-)?\d+)\s*(-|\.\.\.?|to)\s*((\+|-)?\d+)\s*$/);
+			match = crit.match(/^\s*["']?\s*(\!?)\s*((\+|-)?\d+)\s*(-|\.\.\.?|to)\s*((\+|-)?\d+)\s*["']?\s*$/);
 			if (match !== null) {
 				start = to_num(match[2]);
 				stop = to_num(match[5]);
@@ -413,7 +413,7 @@
 			}
 
 			// Match 'a' = specific level (or exclude if preceded by '!')
-			match = crit.match(/^\s*(\!?)\s*((\+|-)?\d+)\s*$/);
+			match = crit.match(/^\s*["']?\s*(\!?)\s*((\+|-)?\d+)\s*["']?\s*$/);
 			if (match !== null) {
 				lvl = to_num(match[2]);
 				if (match[1] === '!') value = false;

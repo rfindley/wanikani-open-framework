@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.11
+// @version     1.0.12
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -163,7 +163,7 @@
 						value = (item.default || (is_number==='number'?0:''));
 						set_value(context, base, name, value);
 					}
-					html += wrap_right('<input id="'+id+'" class="setting" type="'+itype+'" name="'+name+'"'+(item.placeholder?' placeholder="'+escape_text(item.placeholder)+'"':'')+'>');
+					html += wrap_right('<input id="'+id+'" class="setting" type="'+itype+'" name="'+name+'"'+(item.placeholder?' placeholder="'+escape_attr(item.placeholder)+'"':'')+'>');
 					html = wrap_row(html, item.full_width, item.hover_tip);
 					break;
 
@@ -218,7 +218,8 @@
 		function wrap_row(html,full,hover_tip) {return '<div class="row'+(full?' full':'')+'"'+to_title(hover_tip)+'>'+html+'</div>';}
 		function wrap_left(html) {return '<div class="left">'+html+'</div>';}
 		function wrap_right(html) {return '<div class="right">'+html+'</div>';}
-		function escape_text(text) {return text.replace(/[<&>]/g, function(ch) {var map={'<':'&lt','&':'&amp;','>':'&gt;'}; return map[ch];});}
+		function escape_text(text) {return text.replace(/[<>]/g, function(ch) {var map={'<':'&lt','>':'&gt;'}; return map[ch];});}
+		function escape_attr(text) {return text.replace(/"/g, '&quot;');}
 		function to_title(tip) {if (!tip) return ''; return ' title="'+tip.replace(/"/g,'&quot;')+'"';}
 	}
 
@@ -252,9 +253,18 @@
 			resize: resize.bind(context,context),
 			close: close.bind(context,context)
 		});
-		dialog.closest('[role="dialog"]').css('position','fixed');
+		$(dialog.dialog('widget')).css('position','fixed');
 
-		$('.wkof_stabs').tabs();
+		$('.wkof_stabs').tabs({activate:tab_activated.bind(null,context)});
+		var settings = wkof.settings[context.cfg.script_id];
+		if (settings && settings.wkofs_active_tabs instanceof Array) {
+			var active_tabs = settings.wkofs_active_tabs;
+			for (var tab_idx = 0; tab_idx < active_tabs.length; tab_idx++) {
+				var tab = $(active_tabs[tab_idx]);
+				tab.closest('.ui-tabs').tabs({active:tab.index()});
+			}
+		}
+
 		dialog.dialog('open');
 		var dialog_elem = $('#wkofs_'+context.cfg.script_id);
 		dialog_elem.find('.setting[multiple]').on('mousedown', toggle_multi.bind(null,context));
@@ -267,6 +277,14 @@
 		refresh(context);
 
 		//============
+		function tab_activated(context, event, ui) {
+			var dialog = $('#wkofs_'+context.cfg.script_id);
+			var wrapper = $(dialog.dialog('widget'));
+			if (wrapper.outerHeight() + wrapper.position().top > window.innerHeight) {
+				dialog.dialog('option', 'maxHeight', window.innerHeight);
+			}
+		}
+
 		function resize(context, event, ui){
 			var dialog = $('#wkofs_'+context.cfg.script_id);
 			var is_narrow = dialog.hasClass('narrow');
@@ -328,10 +346,16 @@
 	// Save button handler.
 	//------------------------------
 	function save_btn(context, e) {
+		var script_id = context.cfg.script_id;
+		var dialog = $('#wkofs_'+script_id);
+		var settings = wkof.settings[script_id];
+		if (settings) {
+			var active_tabs = dialog.find('.ui-tabs-active').toArray().map(function(tab){return '#'+tab.attributes.id.value});
+			if (active_tabs.length > 0) settings.wkofs_active_tabs = active_tabs;
+		}
 		if (context.cfg.autosave === undefined || context.cfg.autosave === true) save_settings(context);
 		if (typeof context.cfg.on_save === 'function') context.cfg.on_save(wkof.settings[context.cfg.script_id]);
 		wkof.trigger('wkof.settings.save');
-		var dialog = $('#wkofs_'+context.cfg.script_id);
 		context.keep_settings = true;
 		dialog.dialog('close');
 	}
@@ -565,9 +589,7 @@
 	//------------------------------
 	// Load jquery UI and the appropriate CSS based on location.
 	//------------------------------
-	var css_url;
-	if (location.hostname.match(/^(www\.)?wanikani\.com$/) !== null)
-		css_url = wkof.support_files['jqui_wkmain.css'];
+	var css_url = wkof.support_files['jqui_wkmain.css'];
 
 	wkof.ready('document')
 	.then(function(){
