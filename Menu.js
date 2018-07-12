@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.3
+// @version     1.0.4
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -51,7 +51,7 @@
 						'</style>'
 					);
 				}
-				$('#summary-button a[href="/review"').after(
+				$('#summary-button a[href="/review"]').after(
 					'<div id="scripts-menu" class="scripts-menu-icon">'+
 					'  <a class="scripts-icon" href="#"><i class="icon-gear" title="Script Menu"></i></a>'+
 					'  <ul class="dropdown-menu">'+
