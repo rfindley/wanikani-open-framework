@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.41
+// @version     1.0.43
 // @include     https://www.wanikani.com/*
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -13,7 +13,7 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.41';
+	var version = '1.0.43';
 	var ignore_missing_indexeddb = false;
 
 	//########################################################################
@@ -21,9 +21,9 @@
 	// Supported Modules
 	//------------------------------
 	var supported_modules = {
-		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=700840'},
+		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=700865'},
 		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=611211'},
-		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=700631'},
+		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=700866'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=601473'},
 		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=607871'},
 	};
@@ -46,7 +46,8 @@
 			delete: file_cache_delete, // delete(name)        => Promise
 			flush:  file_cache_flush,  // flush()             => Promise
 			load:   file_cache_load,   // load(name)          => Promise
-			save:   file_cache_save    // save(name, content) => Promise
+			save:   file_cache_save,   // save(name, content) => Promise
+			no_cache:file_nocache,     // no_cache(modules)
 		},
 
 		on:      wait_event,           // on(event, callback)
@@ -508,6 +509,32 @@
 		for (var fnum in old_files) {
 			console.log('  '+(Number(fnum)+1)+': '+old_files[fnum]);
 			wkof.file_cache.delete(old_files[fnum]);
+		}
+	}
+
+	//------------------------------
+	// Process no-cache requests.
+	//------------------------------
+	function file_nocache(list) {
+		if (list === undefined) {
+			var list = split_list(localStorage.getItem('wkof.include.nocache') || '');
+			list = list.concat(split_list(localStorage.getItem('wkof.load_file.nocache') || ''));
+			console.log(list.join(','));
+		} else if (typeof list === 'string') {
+			var no_cache = split_list(list);
+			var idx, modules = [], urls = [];
+			for (idx = 0; idx < no_cache.length; idx++) {
+				var item = no_cache[idx];
+				if (supported_modules[item] !== undefined) {
+					modules.push(item);
+				} else {
+					urls.push(item);
+				}
+			}
+			console.log('Modules: '+modules.join(','));
+			console.log('   URLs: '+urls.join(','));
+			localStorage.setItem('wkof.include.nocache', modules.join(','));
+			localStorage.setItem('wkof.load_file.nocache', urls.join(','));
 		}
 	}
 

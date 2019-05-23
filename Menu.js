@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.5
+// @version     1.0.6
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -172,24 +172,34 @@
 		var link_text = escape_text(config.title);
 		if ($('#'+link_id).length !== 0) return;
 		install_scripts_header();
+		var menu, classes, items, link_html;
 		if (config.submenu) {
 			var submenu = install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			var menu, class_html;
 			if (location.pathname === '/review/session') {
 				menu = submenu.find('.dropdown-menu');
 			} else {
 				menu = submenu.find('.dropdown-menu>ul');
 			}
-			class_html = (config.class ? ' class="sitemap__page '+config.class+'"': ' class="sitemap__page"');
-			menu.append('<li id="'+link_id+'" name="'+config.name+'"'+class_html+'><a href="#">'+link_text+'</a></li>');
+			classes = ['sitemap__page'];
+			if (config.class) classes.push(config.class_html);
+			link_html = '<li id="'+link_id+'" name="'+config.name+'" class="'+classes.join(' ')+'"><a href="#">'+link_text+'</a></li>';
+			menu.append(link_html);
 			menu.append(menu.children().sort(sort_name));
 		} else {
-			var class_html = (config.class ? ' '+classes:'');
-			$('.scripts-header').after('<li id="'+link_id+'" name="'+config.name+'" class="script-link'+class_html+'"><a href="#">'+link_text+'</a></li>');
-			var items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
-			$('.scripts-header').after(items);
+			classes = ['sitemap__page', 'script-link'];
+			if (config.class) classes.push(config.class_html);
+			link_html = '<li id="'+link_id+'" name="'+config.name+'" class="'+classes.join(' ')+'"><a href="#">'+link_text+'</a></li>';
+			if (location.pathname === '/review/session') {
+				$('.scripts-header').after(link_html);
+				items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
+				$('.scripts-header').after(items);
+			} else {
+				$('.scripts-header').append(link_html);
+				items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
+				$('.scripts-header').append(items);
+			}
 		}
 
 		// Add a callback for when the link is clicked.

@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.9
+// @version     1.0.10
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -18,6 +18,7 @@
 		fetch_endpoint: fetch_endpoint,
 		get_endpoint: get_endpoint,
 		is_valid_apikey_format: is_valid_apikey_format,
+		spoof: override_key,
 	};
 	//########################################################################
 
@@ -27,11 +28,31 @@
 	var skip_username_check = false;
 
 	//------------------------------
+	// Set up an API key to spoof for testing
+	//------------------------------
+	function override_key(key) {
+		if (is_valid_apikey_format(key)) {
+			localStorage.setItem('apiv2_key_override', key);
+		} else if (key === undefined) {
+			var key = localStorage.getItem('apiv2_key_override');
+			if (key === null) {
+				console.log('Not currently spoofing.');
+			} else {
+				console.log(key);
+			}
+		} else if (key === '') {
+			localStorage.removeItem('apiv2_key_override');
+		} else {
+			console.log('That\'s not a valid key!');
+		}
+	}
+
+	//------------------------------
 	// Retrieve the username from the page.
 	//------------------------------
 	function get_username() {
 		try {
-			return WaniKani.studyInformation.user_information.username;
+			return $('.user-summary__username').text();
 		} catch(e) {
 			return undefined;
 		}
@@ -90,11 +111,28 @@
 		return wkof.load_file('https://www.wanikani.com/settings/personal_access_tokens')
 		.then(parse_page);
 
-		function parse_page(page){
-			var page = $(page);
+		function parse_page(html){
+			var page = $(html);
 			var apikey = page.find('.personal-access-token-token > code').eq(0).text();
-			if (!wkof.Apiv2.is_valid_apikey_format(apikey))
+			if (!wkof.Apiv2.is_valid_apikey_format(apikey)) {
+				var status = localStorage.getItem('wkof_generate_token');
+				if (status === null) {
+					if (confirm("It looks like you haven't generated a Personal Access Token yet,\nwhich is required to run Open Framework scripts.\nDo you want to generate one now?")) {
+						return generate_apiv2_key();
+					} else {
+						localStorage.setItem('wkof_generate_token', 'ignore');
+					}
+				} else if (status === "ignore") {
+					wkof.Menu.insert_script_link({
+						name: 'gen_apiv2_key',
+						title: 'Generate APIv2 key',
+					    on_click: generate_apiv2_key
+					});
+				}
 				return Promise.reject('No API key (version 2) found on account page!');
+			} else {
+				delete localStorage.wkof_generate_token;
+			}
 
 			// Store the api key.
 			wkof.Apiv2.key = apikey;
@@ -102,6 +140,38 @@
 			wkof.set_state('wkof.Apiv2.key', 'ready');
 			return apikey;
 		};
+
+		function generate_apiv2_key()
+		{
+			localStorage.setItem('wkof_generate_token', 'generating');
+			return wkof.load_file('https://www.wanikani.com/settings/personal_access_tokens/new')
+			.then(parse_token_page).then(function(){
+				location.reload();
+			});
+		}
+
+		function parse_token_page(html) {
+			var page = $(html);
+			var form = page.find('form.new_personal_access_token');
+			var hidden_inputs = form.find('input[type="hidden"]');
+			var checkboxes = form.find('input[type="checkbox"]');
+			var submit_url = form.attr('action');
+			var data = {};
+
+			hidden_inputs.each(parse_hidden_inputs);
+			checkboxes.each(parse_checkboxes);
+			data['personal_access_token[description]'] = 'Open Framework (read-only)';
+
+			return $.post(submit_url, data);
+
+			function parse_hidden_inputs(idx, elem) {
+				data[elem.attributes.name.value] = elem.attributes.value.value;
+			}
+
+			function parse_checkboxes(idx, elem) {
+				data[elem.attributes.name.value] = '0';
+			}
+		}
 	}
 
 	//------------------------------
