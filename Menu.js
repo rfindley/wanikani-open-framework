@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.4
+// @version     1.0.5
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -74,30 +74,28 @@
 
 			default:
 				// Install css and html.
-				top_menu = $('.dropdown.account');
+				top_menu = $('[class$="account"]');
 				if ($('style[name="scripts_submenu"]').length === 0) {
 					$('head').append(
 						'<style name="scripts_submenu">'+
-						'html#main .navbar .scripts-submenu {position:relative;}'+
-						'html#main .navbar .scripts-submenu.open>.dropdown-menu {display:block;position:absolute;top:0px;}'+
+						'.scripts-submenu {position:relative;}'+
+						'.scripts-submenu.open>.dropdown-menu {display:block;position:absolute;top:0px;margin-top:0;left:-48px;transform:scale(1) translateX(-100%);min-width:200px}'+
+						'.scripts-submenu .dropdown-menu:before {left:100%;top:14px;z-index:-1;}'+
+						'.scripts-submenu .dropdown-menu .sitemap__pages {padding:5px 15px 0px 15px;}'+
+						'.scripts-submenu .dropdown-menu .sitemap__page:last-child {margin-bottom:0;}'+
 						'.scripts-submenu>a:before {content:"\uf0d9 "; font-family:"FontAwesome";}'+
 						'@media (max-width: 979px) {'+
 						'  .scripts-submenu>a:before {content:"";}'+
-						'  html#main .navbar .scripts-submenu {margin-left:1.5em;}'+
-						'  html#main .navbar .scripts-submenu>a {text-align:left;}'+
-						'  html#main .navbar .scripts-submenu>ul.dropdown-menu {margin-left:.5em;}'+
-						'  html#main .navbar .dropdown.account>.dropdown-menu>.script-link {margin-left:1.5em;}'+
-						'  html#main .navbar .dropdown.account>.dropdown-menu>.script-link>a {text-align:left;}'+
-						'  html#main .navbar .dropdown-menu>li:not(.nav-header).scripts-submenu {display:block;width:100%;}'+
-						'  html#main .navbar .scripts-submenu>.dropdown-menu {display:block;padding:0;margin:0;box-shadow:none;}'+
-						'  html#main .navbar .scripts-submenu.open>.dropdown-menu {position:relative;top:0px;left:initial;right:initial;}'+
-						'  html#main .navbar .dropdown-menu>li:not(.nav-header).scripts-submenu>.dropdown-menu>li {width:auto;padding:0 1em;}'+
+						'  .scripts-submenu>.dropdown-menu {display:contents;position:initial;top:initial;margin-top:initial;left:initial;transform:none;min-width:initial}'+
 						'}'+
 						'</style>'
 					);
 				}
-				$('.nav-header:contains("Account")').before(
-					'<li class="scripts-header nav-header">Scripts</li>'
+				$('.user-summary').after(
+					'<li class="sitemap__section sitemap__section--subsection">'+
+					'  <h3 class="sitemap__section-header sitemap__section-header--subsection">Scripts</h3>'+
+					'  <ul class="sitemap__pages scripts-header"></ul>'+
+					'</li>'
 				);
 				break;
 		}
@@ -139,14 +137,27 @@
 		var submenu = $('.scripts-submenu[name="'+safe_name+'"]');
 		if (submenu.length > 0) return submenu;
 
-		submenu = $(
-			'<li class="scripts-submenu" name="'+safe_name+'">'+
-			'  <a href="#">'+safe_text+'</a>'+
-			'  <ul class="dropdown-menu">'+
-			'  </ul>'+
-			'</li>'
-		);
-		$('.scripts-header').after(submenu);
+		if (location.pathname === '/review/session') {
+			submenu = $(
+				'<li class="scripts-submenu" name="'+safe_name+'">'+
+				'  <a href="#">'+safe_text+'</a>'+
+				'  <ul class="dropdown-menu">'+
+				'  </ul>'+
+				'</li>'
+			);
+			$('.scripts-header').after(submenu);
+		} else {
+			submenu = $(
+				'<li class="sitemap__page scripts-submenu" name="'+safe_name+'">'+
+				'  <a href="#">'+safe_text+'</a>'+
+				'  <div class="sitemap__expandable-chunk dropdown-menu" data-expanded="true" aria-expanded="true">'+
+				'    <ul class="sitemap__pages">'+
+				'    </ul>'+
+				'  </div>'+
+				'</li>'
+			);
+			$('.scripts-header').append(submenu);
+		}
 		var items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
 		$('.scripts-header').after(items);
 		return submenu;
@@ -165,8 +176,13 @@
 			var submenu = install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			var menu = submenu.find('.dropdown-menu');
-			var class_html = (config.class ? ' class="'+config.class+'"': '');
+			var menu, class_html;
+			if (location.pathname === '/review/session') {
+				menu = submenu.find('.dropdown-menu');
+			} else {
+				menu = submenu.find('.dropdown-menu>ul');
+			}
+			class_html = (config.class ? ' class="sitemap__page '+config.class+'"': ' class="sitemap__page"');
 			menu.append('<li id="'+link_id+'" name="'+config.name+'"'+class_html+'><a href="#">'+link_text+'</a></li>');
 			menu.append(menu.children().sort(sort_name));
 		} else {
@@ -179,9 +195,10 @@
 		// Add a callback for when the link is clicked.
 		$('#'+link_id).on('click', function(e){
 			$('body').off('click.scripts-link');
-			$('.dropdown.account').removeClass('open');
 			$('#scripts-menu').removeClass('open');
 			$('.scripts-submenu').removeClass('open');
+			$('[class$="account"]').siblings('[data-navigation-section-toggle]').click();
+			$('[aria-label="Menu"]').click();
 			config.on_click(e);
 			return false;
 		});
@@ -195,4 +212,3 @@
 	}
 
 })(window);
-

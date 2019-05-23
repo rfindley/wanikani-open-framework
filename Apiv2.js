@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.6
+// @version     1.0.8
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -31,7 +31,7 @@
 	//------------------------------
 	function get_username() {
 		try {
-			return ($('.account a[href^="/users/"]').attr('href') || '').match(/[^\/]+$/)[0];
+			return ($('.user-summary__username').text() || '').match(/[^\/]+$/)[0];
 		} catch(e) {
 			return undefined;
 		}
@@ -87,12 +87,12 @@
 		// Fetch the apikey from the account page.
 		console.log('Fetching API key...');
 		wkof.set_state('wkof.Apiv2.key', 'fetching');
-		return wkof.load_file('https://www.wanikani.com/settings/account')
+		return wkof.load_file('https://www.wanikani.com/settings/personal_access_tokens')
 		.then(parse_page);
 
 		function parse_page(page){
 			var page = $(page);
-			var apikey = page.find('#user_api_key_v2').val();
+			var apikey = page.find('.personal-access-token-token > code').eq(0).text();
 			if (!wkof.Apiv2.is_valid_apikey_format(apikey))
 				return Promise.reject('No API key (version 2) found on account page!');
 
@@ -471,4 +471,3 @@
 	}
 
 })(window);
-

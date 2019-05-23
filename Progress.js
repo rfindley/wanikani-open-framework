@@ -196,4 +196,3 @@
 	set_ready_state();
 
 })(window);
-

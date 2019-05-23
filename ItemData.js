@@ -483,4 +483,3 @@
 	wkof.ready('Apiv2').then(call_for_registration).then(notify_ready);
 
 })(this);
-
