@@ -2,8 +2,6 @@
 
 Wanikani Open Framework ("`wkof`") is a user-created framework for rapidly developing web browser userscripts for use with the Japanese kanji learning site [wanikani.com](https://www.wanikani.com).
 
-_[Disclaimer: This project is currently in early development, so changes are expected to occur frequently.  However, the interface will generally remain backward compatible.  Any potentially breaking changes will be announced and discussed [[here](https://community.wanikani.com/t/wanikani-open-framework-discussion/22231)].  Script writers are encouraged to evaluate the API and provide feedback to help shape its usefulness to the developer community.]_
-
 -----
 
 # Table of Contents

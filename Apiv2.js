@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.8
+// @version     1.0.9
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -31,7 +31,7 @@
 	//------------------------------
 	function get_username() {
 		try {
-			return ($('.user-summary__username').text() || '').match(/[^\/]+$/)[0];
+			return WaniKani.studyInformation.user_information.username;
 		} catch(e) {
 			return undefined;
 		}
