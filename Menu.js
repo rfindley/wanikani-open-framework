@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.6
+// @version     1.0.7
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -78,9 +78,9 @@
 				if ($('style[name="scripts_submenu"]').length === 0) {
 					$('head').append(
 						'<style name="scripts_submenu">'+
-						'.scripts-submenu {position:relative;}'+
-						'.scripts-submenu.open>.dropdown-menu {display:block;position:absolute;top:0px;margin-top:0;left:-48px;transform:scale(1) translateX(-100%);min-width:200px}'+
-						'.scripts-submenu .dropdown-menu:before {left:100%;top:14px;z-index:-1;}'+
+						'.sitemap__section.scripts-noposition {position:initial;}'+
+						'.scripts-submenu.open>.dropdown-menu {display:block;position:absolute;top:0px;margin-top:0;left:-8px;transform:scale(1) translateX(-100%);min-width:200px}'+
+						'.scripts-submenu .dropdown-menu:before {left:100%;top:12px;z-index:-1;}'+
 						'.scripts-submenu .dropdown-menu .sitemap__pages {padding:5px 15px 0px 15px;}'+
 						'.scripts-submenu .dropdown-menu .sitemap__page:last-child {margin-bottom:0;}'+
 						'.scripts-submenu>a:before {content:"\uf0d9 "; font-family:"FontAwesome";}'+
@@ -92,7 +92,7 @@
 					);
 				}
 				$('.user-summary').after(
-					'<li class="sitemap__section sitemap__section--subsection">'+
+					'<li class="sitemap__section sitemap__section--subsection scripts-noposition">'+
 					'  <h3 class="sitemap__section-header sitemap__section-header--subsection">Scripts</h3>'+
 					'  <ul class="sitemap__pages scripts-header"></ul>'+
 					'</li>'
@@ -104,6 +104,9 @@
 		top_menu.on('click','.scripts-submenu>a',function(e){
 			var link = $(e.target).parent();
 			link.siblings('.scripts-submenu.open').removeClass('open');
+			if (location.pathname !== '/review/session') {
+				link.find('.dropdown-menu').css('top',link.position().top+'px');
+			}
 			link.toggleClass('open');
 			// If we opened the menu, listen for off-menu clicks.
 			if (link.hasClass('open')) {

@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.13
+// @version     1.0.14
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -136,6 +136,7 @@
 		var prep_promises = [];
 		var options = config.options || {};
 		var filters = [];
+		var is_wk_items = (spec === wkof.ItemData.registry.sources.wk_items);
 		for (var filter_name in config.filters) {
 			var filter_cfg = config.filters[filter_name];
 			if (typeof filter_cfg !== 'object' || filter_cfg.value === undefined)
@@ -156,7 +157,7 @@
 				invert: (filter_cfg.invert === true)
 			});
 		}
-		if (options.include_hidden !== true) {
+		if (is_wk_items && (options.include_hidden !== true)) {
 			filters.push({
 				name: 'remove_deleted',
 				func: function(filter_value, item){return item.data.hidden_at === null;},
@@ -171,7 +172,7 @@
 			for (var item_idx in items) {
 				var keep = true;
 				var item = items[item_idx];
-				if (item.data.level > max_level) continue;
+				if (is_wk_items && (item.data.level > max_level)) continue;
 				for (var filter_idx in filters) {
 					var filter = filters[filter_idx];
 					try {
