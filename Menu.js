@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.7
+// @version     1.0.9
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -211,7 +211,8 @@
 			$('#scripts-menu').removeClass('open');
 			$('.scripts-submenu').removeClass('open');
 			$('[class$="account"]').siblings('[data-navigation-section-toggle]').click();
-			$('[aria-label="Menu"]').click();
+			var nav_toggle = $('.navigation__toggle');
+			if (nav_toggle.is(':visible')) nav_toggle.click();
 			config.on_click(e);
 			return false;
 		});
