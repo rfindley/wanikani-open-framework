@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.14
+// @version     1.0.17
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -168,7 +168,7 @@
 
 		return Promise.all(prep_promises).then(function(){
 			var result = [];
-			var max_level = Math.max(wkof.user.max_level_granted_by_subscription, wkof.user.override_max_level || 0);
+			var max_level = Math.max(wkof.user.subscription.max_level_granted, wkof.user.override_max_level || 0);
 			for (var item_idx in items) {
 				var keep = true;
 				var item = items[item_idx];
@@ -308,8 +308,8 @@
 	make_index_func('item_type', 'item.object', 'array');
 	make_index_func('level', 'item.data.level', 'array');
 	make_index_func('slug', 'item.data.slug', 'single_or_array');
-	make_index_func('srs_stage', 'item.assignments.srs_stage', 'array');
-	make_index_func('srs_stage_name', 'item.assignments.srs_stage_name', 'array');
+	make_index_func('srs_stage', '(item.assignments && item.assignments.unlocked_at ? item.assignments.srs_stage : -1)', 'array');
+	make_index_func('srs_stage_name', '(item.assignments && item.assignments.unlocked_at ? item.assignments.srs_stage_name : "Locked")', 'array');
 	make_index_func('subject_id', 'item.id', 'single');
 
 
@@ -361,19 +361,19 @@
 	// array containing 'true' for each srs level contained in the criteria.
 	//------------------------------
 	function srs_to_arr(filter_value) {
-		var index = ['init','appr1','appr2','appr3','appr4','guru1','guru2','mast','enli','burn'];
+		var index = ['lock','init','appr1','appr2','appr3','appr4','guru1','guru2','mast','enli','burn'];
 		var arr = [], value;
 		if (typeof filter_value === 'string') filter_value = split_list(filter_value);
 		if (typeof filter_value !== 'object') return {};
 		if (Array.isArray(filter_value)) {
 			for (var idx in filter_value) {
 				value = Number(filter_value[idx]);
-				if (isNaN(value)) value = index.indexOf(filter_value[idx]);
+				if (isNaN(value)) value = index.indexOf(filter_value[idx]) - 1;
 				arr[value] = true;
 			}
 		} else {
 			for (value in filter_value) {
-				arr[index.indexOf(value)] = (filter_value[value] === true);
+				arr[index.indexOf(value) - 1] = (filter_value[value] === true);
 			}
 		}
 		return arr;
@@ -430,7 +430,7 @@
 		//============
 		function to_num(num) {
 			num = (num[0] < '0' ? wkof.user.level : 0) + Number(num)
-			return Math.min(Math.max(1, num), wkof.user.max_level_granted_by_subscription);
+			return Math.min(Math.max(1, num), wkof.user.subscription.max_level_granted);
 		}
 	}
 

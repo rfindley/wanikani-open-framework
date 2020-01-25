@@ -309,7 +309,6 @@
 		function setting_button_clicked(context, e) {
 			var name = e.target.attributes.name.value;
 			var item = context.config_list[name];
-			window.item = item;
 			if (typeof item.on_click === 'function')
 				item.on_click.call(e, name, item, setting_changed.bind(context, context, e));
 		}

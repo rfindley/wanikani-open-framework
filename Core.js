@@ -2,8 +2,8 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.47
-// @include     https://www.wanikani.com/*
+// @version     1.0.50
+// @include     /^https://(www|preview).wanikani.com//
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // @run-at      document-start
@@ -13,7 +13,10 @@
 (function(global) {
 	'use strict';
 
-	var version = '1.0.47';
+	/* eslint no-multi-spaces: off */
+	/* globals wkof */
+
+	var version = '1.0.50';
 	var ignore_missing_indexeddb = false;
 
 	//########################################################################
@@ -21,8 +24,8 @@
 	// Supported Modules
 	//------------------------------
 	var supported_modules = {
-		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=700865'},
-		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=701635'},
+		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=747866'},
+		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=767868'},
 		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=745388'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=601473'},
 		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=607871'},
@@ -42,6 +45,7 @@
 
 		file_cache: {
 			dir:    {},                // Object containing directory of files.
+			ls:     file_cache_list,   // ls()
 			clear:  file_cache_clear,  // clear()             => Promise
 			delete: file_cache_delete, // delete(name)        => Promise
 			flush:  file_cache_flush,  // flush()             => Promise
@@ -98,8 +102,9 @@
 	var include_promises = {};
 
 	function include(module_list) {
-		if (wkof.get_state('wkof.wkof') !== 'ready')
+		if (wkof.get_state('wkof.wkof') !== 'ready') {
 			return wkof.ready('wkof').then(function(){return wkof.include(module_list);});
+		}
 		var include_promise = promise();
 		var module_names = split_list(module_list);
 		var script_cnt = module_names.length;
@@ -120,7 +125,7 @@
 				continue;
 			}
 			var await_load = include_promises[module_name];
-			var use_cache = no_cache.indexOf(module_name) < 0;
+			var use_cache = (no_cache.indexOf(module_name) < 0) && (no_cache.indexOf('*') < 0);
 			if (!use_cache) file_cache_delete(module.url);
 			if (await_load === undefined) include_promises[module_name] = await_load = load_script(module.url, use_cache);
 			await_load.then(push_loaded, push_failed);
@@ -157,12 +162,13 @@
 			ready_promises.push(wait_state('wkof.' + module_name, 'ready'));
 		}
 
-		if (ready_promises.length === 0)
+		if (ready_promises.length === 0) {
 			return Promise.resolve();
-		else if (ready_promises.length === 1)
+		} else if (ready_promises.length === 1) {
 			return ready_promises[0];
-		else
+		} else {
 			return Promise.all(ready_promises);
+		}
 	}
 	//########################################################################
 
@@ -172,7 +178,7 @@
 	function load_file(url, use_cache) {
 		var fetch_promise = promise();
 		var no_cache = split_list(localStorage.getItem('wkof.load_file.nocache') || '');
-		if (no_cache.indexOf(url) >= 0) use_cache = false;
+		if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) use_cache = false;
 		if (use_cache === true) {
 			return file_cache_load(url, use_cache).catch(fetch_url);
 		} else {
@@ -285,9 +291,11 @@
 		if (persistent || value !== current_value) state_listeners[state_var].push({callback:callback, persistent:persistent, value:value});
 
 		// If it's already at the desired state, call the callback immediately.
-		if (value === current_value) try {
-			callback(value, current_value);
-		} catch (err) {}
+		if (value === current_value) {
+			try {
+				callback(value, current_value);
+			} catch (err) {}
+		}
 		return promise;
 	}
 	//########################################################################
@@ -338,10 +346,11 @@
 		function error() {
 			console.log('indexedDB could not open!');
 			wkof.file_cache.dir = {};
-			if (ignore_missing_indexeddb)
+			if (ignore_missing_indexeddb) {
 				open_promise.resolve(null);
-			else
+			} else {
 				open_promise.reject();
+			}
 		}
 
 		function upgrade_db(event){
@@ -366,6 +375,13 @@
 				wkof.file_cache.dir = JSON.parse(event.target.result.content);
 			}
 		}
+	}
+
+	//------------------------------
+	// Lists the content of the file_cache.
+	//------------------------------
+	function file_cache_list() {
+		console.log(Object.keys(wkof.file_cache.dir).sort().join('\n'));
 	}
 
 	//------------------------------
@@ -397,10 +413,11 @@
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
 			var files = Object.keys(wkof.file_cache.dir).filter(function(file){
-				if (pattern instanceof RegExp)
+				if (pattern instanceof RegExp) {
 					return file.match(pattern) !== null;
-				else
+				} else {
 					return (file === pattern);
+				}
 			});
 			files.forEach(function(file){
 				store.delete(file);
@@ -441,10 +458,11 @@
 			return load_promise;
 
 			function finish(event){
-				if (event.target.result === undefined)
+				if (event.target.result === undefined) {
 					load_promise.reject(name);
-				else
+				} else {
 					load_promise.resolve(event.target.result.content);
+				}
 			}
 
 			function error(event){
@@ -517,7 +535,7 @@
 	//------------------------------
 	function file_nocache(list) {
 		if (list === undefined) {
-			var list = split_list(localStorage.getItem('wkof.include.nocache') || '');
+			list = split_list(localStorage.getItem('wkof.include.nocache') || '');
 			list = list.concat(split_list(localStorage.getItem('wkof.load_file.nocache') || ''));
 			console.log(list.join(','));
 		} else if (typeof list === 'string') {
@@ -549,10 +567,11 @@
 		global.wkof = published_interface;
 
 		// Mark document state as 'ready'.
-		if (document.readyState === 'complete')
+		if (document.readyState === 'complete') {
 			doc_ready();
-		else
-			window.addEventListener("load", doc_ready, false);	// Notify listeners that we are ready.
+		} else {
+			window.addEventListener("load", doc_ready, false);  // Notify listeners that we are ready.
+		}
 
 		// Open cache, so wkof.file_cache.dir is available to console immediately.
 		file_cache_open();
