@@ -769,7 +769,7 @@ The following index fields are currently available, and can be found in `wkof.It
   ```javascript
   {ground: {…}, fins: {…}, drop: {…}, seven: {…}, slide: {…}, …}
   ```
-* **`srs_stage`** - Index by `item.assignments.srs_stage` (e.g. `1`=Apprentice1, `9`=Burned).
+* **`srs_stage`** - Index by `item.assignments.srs_stage` (e.g. `-1`=Locked, `0`=Initiate, `1`=Apprentice1, `9`=Burned).
   ```javascript
   {0: Array(9), 1: Array(26), 3: {…}, 4: Array(12), 5: Array(15), 6: Array(6), …}
   ```
