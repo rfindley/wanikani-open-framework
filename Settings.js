@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.12
+// @version     1.0.13
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -280,8 +280,8 @@
 		function tab_activated(context, event, ui) {
 			var dialog = $('#wkofs_'+context.cfg.script_id);
 			var wrapper = $(dialog.dialog('widget'));
-			if (wrapper.outerHeight() + wrapper.position().top > window.innerHeight) {
-				dialog.dialog('option', 'maxHeight', window.innerHeight);
+			if (wrapper.outerHeight() + wrapper.position().top > document.body.clientHeight) {
+				dialog.dialog('option', 'maxHeight', document.body.clientHeight);
 			}
 		}
 

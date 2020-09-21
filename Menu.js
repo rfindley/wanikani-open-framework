@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.9
+// @version     1.0.10
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -105,9 +105,25 @@
 			var link = $(e.target).parent();
 			link.siblings('.scripts-submenu.open').removeClass('open');
 			if (location.pathname !== '/review/session') {
-				link.find('.dropdown-menu').css('top',link.position().top+'px');
+				var menu = $('[id="#sitemap__account"]');
+				var submenu = link.find('.dropdown-menu');
+				submenu.css('font-size', '12px');
+				submenu.css('max-height', '');
+				var submenu_ul = submenu.find('>ul');
+				var top = Math.max(0, link.position().top);
+				link.toggleClass('open');
+				if (link.hasClass('open')) {
+					submenu.css('top',top+'px');
+					if (menu.outerHeight() - top < submenu.outerHeight())
+					{
+						top = Math.max(0, menu.outerHeight() - submenu.outerHeight());
+						submenu.css('top', top+'px');
+						submenu.css('max-height', menu.outerHeight() - top);
+					}
+				}
+			} else {
+				link.toggleClass('open');
 			}
-			link.toggleClass('open');
 			// If we opened the menu, listen for off-menu clicks.
 			if (link.hasClass('open')) {
 				$('body').on('click.scripts-submenu',function(e){
