@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.10
+// @version     1.0.12
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -31,7 +31,14 @@
 
 		// Install html.
 		switch (location.pathname) {
+			case '/lesson/session':
 			case '/review/session':
+				var summary_button;
+				if (location.pathname == '/lesson/session') {
+					summary_button = $('#summary-button[href="/lesson"]')
+				} else {
+					summary_button = $('#summary-button a[href="/review"]')
+				}
 				// Install css and html.
 				if ($('style[name="scripts_submenu"]').length === 0) {
 					$('head').append(
@@ -40,9 +47,9 @@
 						'#scripts-menu .scripts-icon {display:inline-block}'+
 						'#scripts-menu:not(.open) > .dropdown-menu {display:none;}'+
 						'#scripts-menu .scripts-submenu:not(.open) > .dropdown-menu {display:none;}'+
-						'#scripts-menu .dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333;}'+
-						'#scripts-menu .dropdown-menu > li {text-align:left; color:#333; white-space:nowrap; line-height:20px; padding:3px 0;}'+
-						'#scripts-menu .dropdown-menu > li.scripts-header {text-transform:uppercase; font-size:11px; font-weight:bold; padding:3px 20px;}'+
+						'#scripts-menu .dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333; display:block;}'+
+						'#scripts-menu .dropdown-menu > li {text-align:left; color:#333; white-space:nowrap; line-height:20px; padding:3px 0; display:list-item;}'+
+						'#scripts-menu .dropdown-menu > li.scripts-header {text-transform:uppercase; font-size:11px; font-weight:bold; padding:3px 20px; display:list-item;}'+
 						'#scripts-menu .dropdown-menu > li:hover:not(.scripts-header) {background-color:rgba(0,0,0,0.15)}'+
 						'#scripts-menu .dropdown-menu a {padding:3px 20px; color:#333; opacity:1;}'+
 						'#scripts-menu .scripts-submenu {position:relative;}'+
@@ -51,9 +58,10 @@
 						'</style>'
 					);
 				}
-				$('#summary-button a[href="/review"]').after(
+
+				summary_button.after(
 					'<div id="scripts-menu" class="scripts-menu-icon">'+
-					'  <a class="scripts-icon" href="#"><i class="icon-gear" title="Script Menu"></i></a>'+
+					'  <a class="scripts-icon" href="#"><i class="fa fa-gear" title="Script Menu"></i></a>'+
 					'  <ul class="dropdown-menu">'+
 					'    <li class="scripts-header">Script Menu</li>'+
 					'  </ul>'+
@@ -104,7 +112,7 @@
 		top_menu.on('click','.scripts-submenu>a',function(e){
 			var link = $(e.target).parent();
 			link.siblings('.scripts-submenu.open').removeClass('open');
-			if (location.pathname !== '/review/session') {
+			if (location.pathname.match(/^\/(review|lesson)\/session/) === null) {
 				var menu = $('[id="#sitemap__account"]');
 				var submenu = link.find('.dropdown-menu');
 				submenu.css('font-size', '12px');
@@ -156,7 +164,7 @@
 		var submenu = $('.scripts-submenu[name="'+safe_name+'"]');
 		if (submenu.length > 0) return submenu;
 
-		if (location.pathname === '/review/session') {
+		if (location.pathname.match(/^\/(review|lesson)\/session/) !== null) {
 			submenu = $(
 				'<li class="scripts-submenu" name="'+safe_name+'">'+
 				'  <a href="#">'+safe_text+'</a>'+
@@ -196,7 +204,7 @@
 			var submenu = install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			if (location.pathname === '/review/session') {
+			if (location.pathname.match(/^\/(review|lesson)\/session/) !== null) {
 				menu = submenu.find('.dropdown-menu');
 			} else {
 				menu = submenu.find('.dropdown-menu>ul');
@@ -210,7 +218,7 @@
 			classes = ['sitemap__page', 'script-link'];
 			if (config.class) classes.push(config.class_html);
 			link_html = '<li id="'+link_id+'" name="'+config.name+'" class="'+classes.join(' ')+'"><a href="#">'+link_text+'</a></li>';
-			if (location.pathname === '/review/session') {
+			if (location.pathname.match(/^\/(review|lesson)\/session/) !== null) {
 				$('.scripts-header').after(link_html);
 				items = $('.scripts-header').siblings('.scripts-submenu,.script-link').sort(sort_name);
 				$('.scripts-header').after(items);

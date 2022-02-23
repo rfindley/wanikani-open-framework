@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.13
+// @version     1.0.14
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -246,7 +246,7 @@
 				{text:'Cancel',click:cancel_btn.bind(context,context)}
 			],
 			width: width,
-			maxHeight: window.innerHeight,
+			maxHeight: document.body.clientHeight,
 			modal: false,
 			autoOpen: false,
 			appendTo: '#wkof_ds',
