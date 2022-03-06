@@ -334,7 +334,6 @@ Loads a file from `file_cache`.
 
 #### _Parameters:_
 * **`name`** - Name under which the content will be saved in cache.  Can be any string, including a URL.
-* **`content`** - The content to save.  Can be a string or object.
 
 #### _Return value:_
 * **`Promise`** - A Promise that resolves with loaded data.
