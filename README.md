@@ -335,7 +335,6 @@ Loads a file from `file_cache`.
 
 #### _Parameters:_
 * **`name`** - Name under which the content will be saved in cache.  Can be any string, including a URL.
-* **`content`** - The content to save.  Can be a string or object.
 
 #### _Return value:_
 * **`Promise`** - A Promise that resolves with loaded data.
@@ -1662,7 +1661,7 @@ checkbox_id: {
     type: 'checkbox',
     label:          // A string label that appears to the left of (or above) the checkbox element.
     hover_tip:      // (optional) A string that will appear as a tool-tip when you hover over the checkbox.
-    default:        // (optional) A boolean containing the name of the checkbox item that will be selected by default.
+    default:        // (optional) A boolean indicating whether the box should be ticked by default.
     full_width:     // (optional) A boolean that, if true, causes the component to occupy a full line.
     validate:       // (optional) A callback for validating the value of the setting (see Validating Inputs).
     on_change:      // (optional) A callback that will be called when the setting changes.
