@@ -2,8 +2,8 @@
 // @name        Wanikani Open Framework - Settings module
 // @namespace   rfindley
 // @description Settings module for Wanikani Open Framework
-// @version     1.0.14
-// @copyright   2018+, Robin Findley
+// @version     1.0.20
+// @copyright   2022+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
@@ -45,6 +45,30 @@
 
 	wkof.settings = {};
 	var ready = false;
+
+	//========================================================================
+	function deep_merge(...objects) {
+		let merged = {};
+		function recursive_merge(dest, src) {
+			for (let prop in src) {
+				if (typeof src[prop] === "object" && src[prop] !== null ) {
+					if (Array.isArray(src[prop])) {
+						dest[prop] = src[prop].slice();
+					} else {
+						dest[prop] = dest[prop] || {};
+						recursive_merge(dest[prop], src[prop]);
+					}
+				} else {
+					dest[prop] = src[prop];
+				}
+			}
+			return dest;
+		}
+		for (let obj in objects) {
+			recursive_merge(merged, objects[obj]);
+		}
+		return merged;
+	}
 
 	//------------------------------
 	// Convert a config object to html dialog.
@@ -254,6 +278,7 @@
 			close: close.bind(context,context)
 		});
 		$(dialog.dialog('widget')).css('position','fixed');
+		dialog.parent().addClass('wkof_settings_dialog');
 
 		$('.wkof_stabs').tabs({activate:tab_activated.bind(null,context)});
 		var settings = wkof.settings[context.cfg.script_id];
@@ -273,7 +298,7 @@
 		dialog_elem.find('button.setting').on('click', setting_button_clicked.bind(null,context));
 
 		if (typeof context.cfg.pre_open === 'function') context.cfg.pre_open(dialog);
-		context.reversions = $.extend(true,{},wkof.settings[context.cfg.script_id]);
+		context.reversions = deep_merge({}, wkof.settings[context.cfg.script_id]);
 		refresh(context);
 
 		//============
@@ -334,7 +359,7 @@
 
 		function finish(settings) {
 			if (defaults)
-				wkof.settings[script_id] = $.extend(true, {}, defaults, settings);
+				wkof.settings[script_id] = deep_merge(defaults, settings);
 			else
 				wkof.settings[script_id] = settings;
 			return wkof.settings[script_id];
@@ -375,7 +400,7 @@
 		var dialog = $('#wkofs_'+context.cfg.script_id);
 		if (!context.keep_settings && keep_settings !== true) {
 			// Revert settings
-			wkof.settings[context.cfg.script_id] = $.extend(true,{},context.reversions);
+			wkof.settings[context.cfg.script_id] = deep_merge({},context.reversions);
 			delete context.reversions;
 		}
 		delete context.keep_settings;
@@ -562,6 +587,10 @@
 		if (anchor.length === 0) {
 			anchor = $('<div id="wkof_ds"></div></div>');
 			$('body').prepend(anchor);
+			$('#wkof_ds').on('keydown keyup keypress', '.wkof_settings_dialog', function(e) {
+				// Stop keys from bubbling beyond the background overlay.
+				e.stopPropagation();
+			});
 		}
 		return anchor;
 	}
@@ -590,7 +619,8 @@
 	//------------------------------
 	var css_url = wkof.support_files['jqui_wkmain.css'];
 
-	wkof.ready('document')
+	wkof.include('Jquery');
+	wkof.ready('document, Jquery')
 	.then(function(){
 		return Promise.all([
 			wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
@@ -601,7 +631,9 @@
 		ready = true;
 
 		// Workaround...  https://community.wanikani.com/t/19984/55
-		delete $.fn.autocomplete;
+		try {
+			delete $.fn.autocomplete;
+		} catch(e) {}
 
 		// Notify listeners that we are ready.
 		// Delay guarantees include() callbacks are called before ready() callbacks.

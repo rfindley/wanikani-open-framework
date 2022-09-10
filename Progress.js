@@ -2,8 +2,8 @@
 // @name        Wanikani Open Framework - Progress module
 // @namespace   rfindley
 // @description Progress module for Wanikani Open Framework
-// @version     1.0.8
-// @copyright   2018+, Robin Findley
+// @version     1.0.11
+// @copyright   2022+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
@@ -14,16 +14,34 @@
 	// Published interface
 	//------------------------------
 	global.wkof.Progress = {
-		update: update_progress
+		update: update_progress,
+		popup_delay: get_or_set_popup_delay,
 	}
 	//########################################################################
 
-	var popup_delay = 1000; // Delay before popup will open (in milliseconds).
+	const default_popup_delay = 2500; // Delay before popup will open (in milliseconds).
+	var popup_delay = default_popup_delay;
+	var show_popup = true;
 	var popup_delay_started = false, popup_delay_expired = false, popup_timer;
 	var externals_requested = false, externals_loaded = false;
 	var progress_bars = {};
 	var user_closed = false;
 	var dialog_visible = false, dialog;
+
+	//------------------------------
+	// Set the delay before the progress dialog pops up.
+	//------------------------------
+	function get_or_set_popup_delay(delay, silent) {
+		if (typeof delay !== 'undefined' && delay !== null) {
+			if (delay === 'default') delay = default_popup_delay;
+			delay = Number(delay);
+			if (Number.isNaN(delay)) throw 'Invalid value for popup_delay';
+			show_popup = (delay >= 0);
+			localStorage.setItem('wkof.Progress.popup_delay', delay);
+			popup_delay = delay;
+		}
+		if (silent !== true) console.log('popup_delay ' + (show_popup ? ('= ' + popup_delay) : 'is disabled'));
+	}
 
 	//------------------------------
 	// Update the progress bar.
@@ -55,8 +73,7 @@
 			bar.max = 1;
 		}
 		// Don't retain items that complete before the dialog pops up.
-		if (!popup_delay_expired && (bar.value >= bar.max))
-			delete progress_bars[data.name];
+		if (!popup_delay_expired && (bar.value >= bar.max)) delete progress_bars[data.name];
 	}
 
 	//------------------------------
@@ -75,8 +92,10 @@
 	// Delay the dialog from popping up until progress takes at least N milliseconds.
 	//------------------------------
 	function start_popup_delay() {
+		get_or_set_popup_delay(localStorage.getItem('wkof.Progress.popup_delay'), true /* silent */);
+		if (!show_popup) return;
 		popup_delay_started = true;
-		popup_timer = setTimeout(function(){
+		popup_timer = setTimeout(function() {
 			popup_delay_expired = true;
 			update_progress();
 		}, popup_delay);
@@ -89,7 +108,7 @@
 		if (!externals_requested) {
 			externals_requested = true;
 			load_externals()
-			.then(function(){
+			.then(function() {
 				externals_loaded = true;
 				update_progress();
 			});
@@ -100,7 +119,11 @@
 
 		if (!dialog_visible) {
 			dialog_visible = true;
-			if ($('#wkof_ds').length === 0) $('body').prepend('<div id="wkof_ds"></div>');
+			if (!document.querySelector('#wkof_ds')) {
+				let ds = document.createElement('div');
+				ds.setAttribute('id', 'wkof_ds');
+				document.body.prepend(ds);
+			}
 
 			dialog = $('<div id="wkof_progbar_dlg" class="wkofs_progress_dlg" style="display:none;"></div>');
 
@@ -151,23 +174,24 @@
 	function load_externals() {
 		var css_url = wkof.support_files['jqui_wkmain.css'];
 
-		return wkof.ready('document')
-		.then(function(){
-			return Promise.all([
-				wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
-				wkof.load_css(css_url, true /* cache */)
-			]);
-		})
-		.then(function(){
-			// Workaround...  https://community.wanikani.com/t/19984/55
-			delete $.fn.autocomplete;
-		});
+		wkof.include('Jquery');
+		return wkof.ready('document, Jquery')
+			.then(function(){
+				return Promise.all([
+					wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
+					wkof.load_css(css_url, true /* cache */)
+				]);
+			})
+			.then(function(){
+				// Workaround...	https://community.wanikani.com/t/19984/55
+				delete $.fn.autocomplete;
+			});
 	}
 
 	//------------------------------
 	// Comparison function for sorting progress bars.
 	//------------------------------
-	function bar_label_compare(a, b){
+	function bar_label_compare(a, b) {
 		var a = $(a).find('label').text();
 		var b = $(b).find('label').text();
 		return a.localeCompare(b);
@@ -178,8 +202,7 @@
 	//------------------------------
 	function shutdown() {
 		// If popup timer was pending, cancel it.
-		if (popup_delay_started && !popup_delay_expired)
-			clearTimeout(popup_timer);
+		if (popup_delay_started && !popup_delay_expired) clearTimeout(popup_timer);
 		popup_delay_started = false;
 		popup_delay_expired = false;
 
@@ -189,9 +212,9 @@
 		progress_bars = {};
 	}
 
-	function set_ready_state(){
+	function set_ready_state() {
 		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){wkof.set_state('wkof.Progress', 'ready');},0);
+		setTimeout(function(){wkof.set_state('wkof.Progress', 'ready');}, 0);
 	}
 	set_ready_state();
 

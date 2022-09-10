@@ -40,6 +40,7 @@ Wanikani Open Framework ("`wkof`") is a user-created framework for rapidly devel
     - [`insert_script_link()`](#menu_insert_script_link)
   - [Progress](#progress_module)
     - [`update()`](#progress_update)
+    - [`popup_delay()`](#progress_popup_delay)
   - [Settings](#settings_module)
     - [`save()`](#settings_save)
     - [`load()`](#settings_load)
@@ -530,7 +531,7 @@ function do_something() {
 
 -----
 
-### <a id="itemdata_get_items">`wkof.ItemData.get_items([config])`</a>
+### <a id="itemdata_get_items">`wkof.ItemData.get_items([config [, global_options]])`</a>
 
 Retrieves a set of items from the Wanikani API.  A subset of items can be selected using optional filters.  The results can then be indexed by specific fields using the `get_index()` function.
 
@@ -543,6 +544,7 @@ When considering how to retrieve API data, you should follow these guidelines:
 
 #### Parameters:
 * **`config`** - _(optional)_ A string or object that specifies the data sources and filters to be used in fetching the desired items.  (Described in detail <a href="#get_items_config">below</a>).
+* **`global_options`** - _(optional)_ An object that specifies options to be passed as a second parameter to all fetcher functions, including `wkof.Apiv2.get_endpoint()` and `wkof.Apiv2.fetch_endpoint()`, which are used by `wkof.ItemData.get_items()`.  *(See `Apiv2` section for details)*.
 
 #### Return value:
 * **`Promise`** - A Promise that resolves with the selected items.
@@ -1010,6 +1012,7 @@ The progress_callback function is called with the following parameters:
   - `so_far` - The number of elements retrieved since the fetch began.
   - `total` - The total number of elements that will be retrieved in this fetch.
 * **`force_update`** - By default, `get_endpoint()` will not seek an update from the server if the last update was less than 1 minute ago.  If this flag is `true`, an update is requested every time.
+* **`disable_progress_dialog`** - A _boolean_ value that, when _true_, disables the progress indicator dialog for this transaction only. _(The progress dialog can be disabled for all transaction by calling `wkof.Progress.popup_delay(-1)`.)_
 
 #### _Example: Get the number of lessons and review currently available:_
 ```javascript
@@ -1161,7 +1164,7 @@ function open_my_script(items) {
 
 ## <a id="progress_module">Progress module</a>
 
-The `Progress` module provides an pop-up dialog for displaying progress bars.
+The `Progress` module provides a pop-up dialog for displaying progress bars.
 
 To use the `Progress` module, you must include it from your script, and wait until the module is ready before accessing it:
 
@@ -1229,6 +1232,22 @@ function do_some_work() {
             do_some_work();
     }, 250);
 }
+```
+-----
+
+### <a id="progress_popup_delay">`wkof.Progress.popup_delay(delay)`</a>
+Sets or gets the pop-up delay, in milliseconds, of the Progress dialog.
+The default value is `2500`, or 2.5 seconds.
+
+This setting is shared by all Open Framework-based scripts.  In general, it should only be set by the end-user,
+either directly from the Javascript console, or from a script intended to let the user adjust their system's settings.
+
+#### _Example Usage:_
+```javascript
+wkof.Progress.popup_delay();           // Read the current value
+wkof.Progress.popup_delay('default');  // Set the delay to the default value (2500 msec)
+wkof.Progress.popup_delay(5000);       // Set the delay to 5 seconds (5000 msec)
+wkof.Progress.popup_delay(-1);         // Disable the pop-up.
 ```
 
 -----
@@ -2006,3 +2025,4 @@ function update_settings() {
     console.log('New maximum is ' + wkof.settings.settings_demo_01.max_apprentice);
 }
 ```
+

@@ -259,7 +259,7 @@
 				label: 'Have burned',
 				default: true,
 				set_options: function(options){options.assignments = true;},
-				filter_func: function(filter_value, item){return (item.assignments.burned_at !== null) === filter_value;},
+				filter_func: function(filter_value, item){return ((item.assignments !== undefined) && (item.assignments.burned_at !== null)) === filter_value;},
 				hover_tip: 'Filter items by whether they have ever been burned.\n  * If checked, select burned items (including resurrected)\n  * If unchecked, select items that have never been burned',
 			},
 		}

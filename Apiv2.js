@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.10
+// @version     1.0.12
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -108,7 +108,7 @@
 		// Fetch the apikey from the account page.
 		console.log('Fetching API key...');
 		wkof.set_state('wkof.Apiv2.key', 'fetching');
-		return wkof.load_file('https://www.wanikani.com/settings/personal_access_tokens')
+		return wkof.load_file('/settings/personal_access_tokens')
 		.then(parse_page);
 
 		function parse_page(html){
@@ -144,7 +144,7 @@
 		function generate_apiv2_key()
 		{
 			localStorage.setItem('wkof_generate_token', 'generating');
-			return wkof.load_file('https://www.wanikani.com/settings/personal_access_tokens/new')
+			return wkof.load_file('/settings/personal_access_tokens/new')
 			.then(parse_token_page).then(function(){
 				location.reload();
 			});
@@ -228,7 +228,7 @@
 
 		//============
 		function setup_and_fetch() {
-			wkof.Progress.update(progress_data);
+			if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
 			headers = {
 			//	'Wanikani-Revision': '20170710', // Placeholder?
 				'Authorization': 'Bearer '+wkof.Apiv2.key,
@@ -271,7 +271,7 @@
 					progress_callback(endpoint, 0, 1, 1);
 				progress_data.value = 1;
 				progress_data.max = 1;
-				wkof.Progress.update(progress_data);
+				if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
 				return fetch_promise.reject({status:this.status, url:url});
 			}
 
@@ -301,7 +301,7 @@
 					progress_callback(endpoint, first_new, so_far, total);
 				progress_data.value = so_far;
 				progress_data.max = total;
-				wkof.Progress.update(progress_data);
+				if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
 
 				// If there are more pages, fetch the next one.
 				if (json.pages.next_url !== null) {
@@ -320,7 +320,7 @@
 					progress_callback(endpoint, 0, 1, 1);
 				progress_data.value = 1;
 				progress_data.max = 1;
-				wkof.Progress.update(progress_data);
+				if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
 				fetch_promise.resolve(json);
 			}
 		}
