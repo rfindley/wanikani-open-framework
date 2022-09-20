@@ -260,7 +260,7 @@
 				// Check for "ratelimit-reset" header. Delay until the specified time.
 				var resetTime = parseInt(this.getResponseHeader("ratelimit-reset"));
 				if (resetTime) {
-				    	var timeRemaining = (resetTime * 1000) - Date.now();
+					var timeRemaining = (resetTime * 1000) - Date.now();
 					setTimeout(fetch, timeRemaining + 500);
 				} else {
 					var delay = Math.min((retry_cnt * 250), 2000);
