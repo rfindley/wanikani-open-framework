@@ -257,8 +257,15 @@
 
 			// Check for rate-limit error.  Delay and retry if necessary.
 			if (this.status === 429 && retry_cnt < 40) {
-				var delay = Math.min((retry_cnt * 250), 2000);
-				setTimeout(fetch, delay);
+				// Check for "ratelimit-reset" header. Delay until the specified time.
+				var resetTime = parseInt(this.getResponseHeader("ratelimit-reset"));
+				if (resetTime) {
+				    	var timeRemaining = (resetTime * 1000) - Date.now();
+					setTimeout(fetch, timeRemaining + 500);
+				} else {
+					var delay = Math.min((retry_cnt * 250), 2000);
+					setTimeout(fetch, delay);
+				}
 				return;
 			}
 
