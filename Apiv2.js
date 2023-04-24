@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.13
+// @version     1.0.14
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -255,8 +255,15 @@
 
 			// Check for rate-limit error.  Delay and retry if necessary.
 			if (this.status === 429 && retry_cnt < 40) {
-				let delay = Math.min((retry_cnt * 250), 2000);
-				setTimeout(fetch, delay);
+				// Check for "ratelimit-reset" header. Delay until the specified time.
+				let resetTime = parseInt(this.getResponseHeader("ratelimit-reset"));
+				if (resetTime) {
+					let timeRemaining = (resetTime * 1000) - Date.now();
+					setTimeout(fetch, timeRemaining + 500);
+				} else {
+					let delay = Math.min((retry_cnt * 250), 2000);
+					setTimeout(fetch, delay);
+				}
 				return;
 			}
 
