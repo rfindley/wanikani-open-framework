@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.0.59
+// @version     1.1.1
 // @match       https://www.wanikani.com/*
 // @match       https://preview.wanikani.com/*
 // @copyright   2022+, Robin Findley
@@ -17,18 +17,18 @@
 	/* eslint no-multi-spaces: off */
 	/* globals wkof */
 
-	var version = '1.0.59';
-	var ignore_missing_indexeddb = false;
+	const version = '1.1.0';
+	let ignore_missing_indexeddb = false;
 
 	//########################################################################
 	//------------------------------
 	// Supported Modules
 	//------------------------------
-	var supported_modules = {
-		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=1091785'},
+	const supported_modules = {
+		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=1180664'},
 		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=1030159'},
 		Jquery:   { url: 'https://greasyfork.org/scripts/451078-wanikani-open-framework-jquery-module/code/Wanikani%20Open%20Framework%20-%20Jquery%20module.js?version=1091794'},
-		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=1091787'},
+		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=1168194'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=1091792'},
 		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=1091793'},
 	};
@@ -37,7 +37,9 @@
 	//------------------------------
 	// Published interface
 	//------------------------------
-	var published_interface = {
+	const published_interface = {
+		on_page_event: on_page_event,  // on_pages({urls:[], load:func, unload:func})
+
 		include: include,              // include(module_list)        => Promise
 		ready:   ready,                // ready(module_list)          => Promise
 
@@ -78,7 +80,7 @@
 	//########################################################################
 
 	function split_list(str) {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0);});}
-	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
+	function promise(){let a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 
 	//########################################################################
 
@@ -86,12 +88,12 @@
 	// Compare the framework version against a specific version.
 	//------------------------------
 	function compare_to(client_version) {
-		var client_ver = client_version.split('.').map(d => Number(d));
-		var wkof_ver = version.split('.').map(d => Number(d));
-		var len = Math.max(client_ver.length, wkof_ver.length);
-		for (var idx = 0; idx < len; idx++) {
-			var a = client_ver[idx] || 0;
-			var b = wkof_ver[idx] || 0;
+		let client_ver = client_version.split('.').map(d => Number(d));
+		let wkof_ver = version.split('.').map(d => Number(d));
+		let len = Math.max(client_ver.length, wkof_ver.length);
+		for (let idx = 0; idx < len; idx++) {
+			let a = client_ver[idx] || 0;
+			let b = wkof_ver[idx] || 0;
 			if (a === b) continue;
 			if (a < b) return 'newer';
 			return 'older';
@@ -102,33 +104,33 @@
 	//------------------------------
 	// Include a list of modules.
 	//------------------------------
-	var include_promises = {};
+	let include_promises = {};
 
 	function include(module_list) {
 		if (wkof.get_state('wkof.wkof') !== 'ready') {
 			return wkof.ready('wkof').then(function(){return wkof.include(module_list);});
 		}
-		var include_promise = promise();
-		var module_names = split_list(module_list);
-		var script_cnt = module_names.length;
+		let include_promise = promise();
+		let module_names = split_list(module_list);
+		let script_cnt = module_names.length;
 		if (script_cnt === 0) {
 			include_promise.resolve({loaded:[], failed:[]});
 			return include_promise;
 		}
 
-		var done_cnt = 0;
-		var loaded = [], failed = [];
-		var no_cache = split_list(localStorage.getItem('wkof.include.nocache') || '');
-		for (var idx = 0; idx < module_names.length; idx++) {
-			var module_name = module_names[idx];
-			var module = supported_modules[module_name];
+		let done_cnt = 0;
+		let loaded = [], failed = [];
+		let no_cache = split_list(localStorage.getItem('wkof.include.nocache') || '');
+		for (let idx = 0; idx < module_names.length; idx++) {
+			let module_name = module_names[idx];
+			let module = supported_modules[module_name];
 			if (!module) {
 				failed.push({name:module_name, url:undefined});
 				check_done();
 				continue;
 			}
-			var await_load = include_promises[module_name];
-			var use_cache = (no_cache.indexOf(module_name) < 0) && (no_cache.indexOf('*') < 0);
+			let await_load = include_promises[module_name];
+			let use_cache = (no_cache.indexOf(module_name) < 0) && (no_cache.indexOf('*') < 0);
 			if (!use_cache) file_cache_delete(module.url);
 			if (await_load === undefined) include_promises[module_name] = await_load = load_script(module.url, use_cache);
 			await_load.then(push_loaded, push_failed);
@@ -157,11 +159,11 @@
 	// Wait for all modules to report that they are ready
 	//------------------------------
 	function ready(module_list) {
-		var module_names = split_list(module_list);
+		let module_names = split_list(module_list);
 
-		var ready_promises = [ ];
-		for (var idx in module_names) {
-			var module_name = module_names[idx];
+		let ready_promises = [ ];
+		for (let idx in module_names) {
+			let module_name = module_names[idx];
 			ready_promises.push(wait_state('wkof.' + module_name, 'ready'));
 		}
 
@@ -179,8 +181,8 @@
 	// Load a file asynchronously, and pass the file as resolved Promise data.
 	//------------------------------
 	function load_file(url, use_cache) {
-		var fetch_promise = promise();
-		var no_cache = split_list(localStorage.getItem('wkof.load_file.nocache') || '');
+		let fetch_promise = promise();
+		let no_cache = split_list(localStorage.getItem('wkof.load_file.nocache') || '');
 		if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) use_cache = false;
 		if (use_cache === true) {
 			return file_cache_load(url, use_cache).catch(fetch_url);
@@ -190,7 +192,7 @@
 
 		// Retrieve file from server
 		function fetch_url(){
-			var request = new XMLHttpRequest();
+			let request = new XMLHttpRequest();
 			request.onreadystatechange = process_result;
 			request.open('GET', url, true);
 			request.send();
@@ -218,7 +220,7 @@
 		return load_file(url, use_cache).then(append_to_tag);
 
 		function append_to_tag(content) {
-			var tag = document.createElement(tag_name);
+			let tag = document.createElement(tag_name);
 			tag.innerHTML = content;
 			tag.setAttribute('uid', url);
 			document.querySelector(location).appendChild(tag);
@@ -237,12 +239,12 @@
 	// Load and install Javascript.
 	//------------------------------
 	function load_script(url, use_cache) {
-		return load_and_append(url, 'script', 'body', use_cache);
+		return load_and_append(url, 'script', 'head', use_cache);
 	}
 	//########################################################################
 
-	var state_listeners = {};
-	var state_values = {};
+	let state_listeners = {};
+	let state_values = {};
 
 	//------------------------------
 	// Get the value of a state variable, and notify listeners.
@@ -255,16 +257,16 @@
 	// Set the value of a state variable, and notify listeners.
 	//------------------------------
 	function set_state(state_var, value) {
-		var old_value = state_values[state_var];
+		let old_value = state_values[state_var];
 		if (old_value === value) return;
 		state_values[state_var] = value;
 
 		// Do listener callbacks, and remove non-persistent listeners
-		var listeners = state_listeners[state_var];
-		var persistent_listeners = [ ];
-		for (var idx in listeners) {
-			var listener = listeners[idx];
-			var keep = true;
+		let listeners = state_listeners[state_var];
+		let persistent_listeners = [ ];
+		for (let idx in listeners) {
+			let listener = listeners[idx];
+			let keep = true;
 			if (listener.value === value || listener.value === '*') {
 				keep = listener.persistent;
 				try {
@@ -282,7 +284,7 @@
 	// If value is '*', callback will be called for all state changes.
 	//------------------------------
 	function wait_state(state_var, value, callback, persistent) {
-		var promise;
+		let promise;
 		if (callback === undefined) {
 			promise = new Promise(function(resolve, reject) {
 				callback = resolve;
@@ -290,7 +292,7 @@
 		}
 		if (state_listeners[state_var] === undefined) state_listeners[state_var] = [ ];
 		persistent = (persistent === true);
-		var current_value = state_values[state_var];
+		let current_value = state_values[state_var];
 		if (persistent || value !== current_value) state_listeners[state_var].push({callback:callback, persistent:persistent, value:value});
 
 		// If it's already at the desired state, call the callback immediately.
@@ -303,20 +305,20 @@
 	}
 	//########################################################################
 
-	var event_listeners = {};
+	let event_listeners = {};
 
 	//------------------------------
 	// Fire an event, which then calls callbacks for any listeners.
 	//------------------------------
 	function trigger_event(event) {
-		var listeners = event_listeners[event];
+		let listeners = event_listeners[event];
 		if (listeners === undefined) return;
-		var args = [];
+		let args = [];
 		Array.prototype.push.apply(args,arguments);
 		args.shift();
-		for (var idx in listeners) try {
+		for (let idx in listeners) { try {
 			listeners[idx].apply(null,args);
-		} catch (err) {}
+		} catch (err) {} }
 		return global.wkof;
 	}
 
@@ -328,18 +330,55 @@
 		event_listeners[event].push(callback);
 		return global.wkof;
 	}
+
+	//------------------------------
+	// Add handlers for page events for a list of URLs.
+	//------------------------------
+	let page_handlers = [];
+	let last_page_loaded = '!'
+	function on_page_event(config) {
+		if (!Array.isArray(config.urls)) config.urls = [config.urls];
+		config.urls = config.urls.map((url) => {
+			if (url instanceof RegExp) return url;
+			if (typeof url !== 'string') return null;
+			return new RegExp(url.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*','.*'));
+		}).filter(url => url !== null);
+		page_handlers.push(config);
+        if (config.load) {
+            config.urls.forEach(url => {
+                if (!url.test(last_page_loaded)) return;
+                config.load();
+            });
+        }
+	}
+
+	//------------------------------
+	// Call page event handlers.
+	//------------------------------
+	function handle_page_events(event_name, event) {
+        if (event) {
+            last_page_loaded = event.detail.url;
+        } else {
+            last_page_loaded = window.location.href
+        }
+        page_handlers.forEach(handler => {
+            if (!handler.urls.find(url => url.test(last_page_loaded))) return;
+            if (typeof handler[event_name] === 'function') handler[event_name](event_name);
+        });
+	}
+
 	//########################################################################
 
-	var file_cache_open_promise;
+	let file_cache_open_promise;
 
 	//------------------------------
 	// Open the file_cache database (or return handle if open).
 	//------------------------------
 	function file_cache_open() {
 		if (file_cache_open_promise) return file_cache_open_promise;
-		var open_promise = promise();
+		let open_promise = promise();
 		file_cache_open_promise = open_promise;
-		var request;
+		let request;
 		request = indexedDB.open('wkof.file_cache');
 		request.onupgradeneeded = upgrade_db;
 		request.onsuccess = get_dir;
@@ -357,15 +396,15 @@
 		}
 
 		function upgrade_db(event){
-			var db = event.target.result;
-			var store = db.createObjectStore('files', {keyPath:'name'});
+			let db = event.target.result;
+			let store = db.createObjectStore('files', {keyPath:'name'});
 		}
 
 		function get_dir(event){
-			var db = event.target.result;
-			var transaction = db.transaction('files', 'readonly');
-			var store = transaction.objectStore('files');
-			var request = store.get('[dir]');
+			let db = event.target.result;
+			let transaction = db.transaction('files', 'readonly');
+			let store = transaction.objectStore('files');
+			let request = store.get('[dir]');
 			request.onsuccess = process_dir;
 			transaction.oncomplete = open_promise.resolve.bind(null, db);
 			open_promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
@@ -394,11 +433,11 @@
 		return file_cache_open().then(clear);
 
 		function clear(db) {
-			var clear_promise = promise();
+			let clear_promise = promise();
 			wkof.file_cache.dir = {};
 			if (db === null) return clear_promise.resolve();
-			var transaction = db.transaction('files', 'readwrite');
-			var store = transaction.objectStore('files');
+			let transaction = db.transaction('files', 'readwrite');
+			let store = transaction.objectStore('files');
 			store.clear();
 			transaction.oncomplete = clear_promise.resolve;
 		}
@@ -411,11 +450,11 @@
 		return file_cache_open().then(del);
 
 		function del(db) {
-			var del_promise = promise();
+			let del_promise = promise();
 			if (db === null) return del_promise.resolve();
-			var transaction = db.transaction('files', 'readwrite');
-			var store = transaction.objectStore('files');
-			var files = Object.keys(wkof.file_cache.dir).filter(function(file){
+			let transaction = db.transaction('files', 'readwrite');
+			let store = transaction.objectStore('files');
+			let files = Object.keys(wkof.file_cache.dir).filter(function(file){
 				if (pattern instanceof RegExp) {
 					return file.match(pattern) !== null;
 				} else {
@@ -443,7 +482,7 @@
 	// Load a file from the file_cache database.
 	//------------------------------
 	function file_cache_load(name) {
-		var load_promise = promise();
+		let load_promise = promise();
 		return file_cache_open().then(load);
 
 		function load(db) {
@@ -451,9 +490,9 @@
 				load_promise.reject(name);
 				return load_promise;
 			}
-			var transaction = db.transaction('files', 'readonly');
-			var store = transaction.objectStore('files');
-			var request = store.get(name);
+			let transaction = db.transaction('files', 'readonly');
+			let store = transaction.objectStore('files');
+			let request = store.get(name);
 			wkof.file_cache.dir[name].last_loaded = new Date().toISOString();
 			file_cache_dir_save();
 			request.onsuccess = finish;
@@ -461,7 +500,7 @@
 			return load_promise;
 
 			function finish(event){
-				if (event.target.result === undefined) {
+				if (event.target.result === undefined || event.target.result === null) {
 					load_promise.reject(name);
 				} else {
 					load_promise.resolve(event.target.result.content);
@@ -481,12 +520,12 @@
 		return file_cache_open().then(save);
 
 		function save(db) {
-			var save_promise = promise();
+			let save_promise = promise();
 			if (db === null) return save_promise.resolve(name);
-			var transaction = db.transaction('files', 'readwrite');
-			var store = transaction.objectStore('files');
+			let transaction = db.transaction('files', 'readwrite');
+			let store = transaction.objectStore('files');
 			store.put({name:name,content:content});
-			var now = new Date().toISOString();
+			let now = new Date().toISOString();
 			wkof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
 			file_cache_dir_save(true /* immediately */);
 			transaction.oncomplete = save_promise.resolve.bind(null, name);
@@ -496,10 +535,10 @@
 	//------------------------------
 	// Save a the file_cache directory contents.
 	//------------------------------
-	var fc_sync_timer;
+	let fc_sync_timer;
 	function file_cache_dir_save(immediately) {
 		if (fc_sync_timer !== undefined) clearTimeout(fc_sync_timer);
-		var delay = (immediately ? 0 : 2000);
+		let delay = (immediately ? 0 : 2000);
 		fc_sync_timer = setTimeout(save, delay);
 
 		function save(){
@@ -508,8 +547,8 @@
 
 		function save2(db){
 			fc_sync_timer = undefined;
-			var transaction = db.transaction('files', 'readwrite');
-			var store = transaction.objectStore('files');
+			let transaction = db.transaction('files', 'readwrite');
+			let store = transaction.objectStore('files');
 			store.put({name:'[dir]',content:JSON.stringify(wkof.file_cache.dir)});
 		}
 	}
@@ -518,16 +557,16 @@
 	// Remove files that haven't been accessed in a while.
 	//------------------------------
 	function file_cache_cleanup() {
-		var threshold = new Date() - 14*86400000; // 14 days
-		var old_files = [];
+		let threshold = new Date() - 14*86400000; // 14 days
+		let old_files = [];
 		for (var fname in wkof.file_cache.dir) {
 			if (fname.match(/^wkof\.settings\./)) continue; // Don't flush settings files.
-			var fdate = new Date(wkof.file_cache.dir[fname].last_loaded);
+			let fdate = new Date(wkof.file_cache.dir[fname].last_loaded);
 			if (fdate < threshold) old_files.push(fname);
 		}
 		if (old_files.length === 0) return;
 		console.log('Cleaning out '+old_files.length+' old file(s) from "wkof.file_cache":');
-		for (var fnum in old_files) {
+		for (let fnum in old_files) {
 			console.log('  '+(Number(fnum)+1)+': '+old_files[fnum]);
 			wkof.file_cache.delete(old_files[fnum]);
 		}
@@ -542,10 +581,10 @@
 			list = list.concat(split_list(localStorage.getItem('wkof.load_file.nocache') || ''));
 			console.log(list.join(','));
 		} else if (typeof list === 'string') {
-			var no_cache = split_list(list);
-			var idx, modules = [], urls = [];
+			let no_cache = split_list(list);
+			let idx, modules = [], urls = [];
 			for (idx = 0; idx < no_cache.length; idx++) {
-				var item = no_cache[idx];
+				let item = no_cache[idx];
 				if (supported_modules[item] !== undefined) {
 					modules.push(item);
 				} else {
@@ -563,11 +602,22 @@
 		wkof.set_state('wkof.document', 'ready');
 	}
 
+	function is_turbo_page() {
+		return (document.querySelector('script[type="importmap"]')?.innerHTML.match('@hotwired/turbo') != null);
+	}
+
 	//########################################################################
 	// Bootloader Startup
 	//------------------------------
 	function startup() {
 		global.wkof = published_interface;
+
+		// Handle page-loading/unloading events.
+		if (is_turbo_page()) {
+			addEventListener('turbo:load', (e) => handle_page_events('load', e));
+		} else {
+			ready('document').then((e) => handle_page_events('load'));
+		}
 
 		// Mark document state as 'ready'.
 		if (document.readyState === 'complete') {
@@ -583,3 +633,4 @@
 	startup();
 
 })(window);
+

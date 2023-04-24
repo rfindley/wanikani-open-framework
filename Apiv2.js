@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.12
+// @version     1.0.14
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -22,10 +22,10 @@
 	};
 	//########################################################################
 
-	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
+	function promise(){let a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 
-	var using_apikey_override = false;
-	var skip_username_check = false;
+	let using_apikey_override = false;
+	let skip_username_check = false;
 
 	//------------------------------
 	// Set up an API key to spoof for testing
@@ -34,7 +34,7 @@
 		if (is_valid_apikey_format(key)) {
 			localStorage.setItem('apiv2_key_override', key);
 		} else if (key === undefined) {
-			var key = localStorage.getItem('apiv2_key_override');
+			let key = localStorage.getItem('apiv2_key_override');
 			if (key === null) {
 				console.log('Not currently spoofing.');
 			} else {
@@ -52,7 +52,7 @@
 	//------------------------------
 	function get_username() {
 		try {
-			return $('.user-summary__username').text();
+			return document.querySelector('.user-summary__username').textContent.trim();
 		} catch(e) {
 			return undefined;
 		}
@@ -70,9 +70,9 @@
 	// Clear any datapoint cache not belonging to the current user.
 	//------------------------------
 	function clear_cache(include_non_user) {
-		var clear_promises = [];
-		var dir = wkof.file_cache.dir;
-		for (var filename in wkof.file_cache.dir) {
+		let clear_promises = [];
+		let dir = wkof.file_cache.dir;
+		for (let filename in wkof.file_cache.dir) {
 			if (!filename.match(/^Apiv2\./)) continue;
 			if ((filename === 'Apiv2.subjects' && include_non_user !== true) || !dir[filename]) continue;
 			clear_promises.push(filename);
@@ -112,10 +112,10 @@
 		.then(parse_page);
 
 		function parse_page(html){
-			var page = $(html);
-			var apikey = page.find('.personal-access-token-token > code').eq(0).text();
+			let page = new DOMParser().parseFromString(html, 'text/html');
+			let apikey = page.querySelector('.personal-access-token-token > code')?.textContent.trim() || '';
 			if (!wkof.Apiv2.is_valid_apikey_format(apikey)) {
-				var status = localStorage.getItem('wkof_generate_token');
+				let status = localStorage.getItem('wkof_generate_token');
 				if (status === null) {
 					if (confirm("It looks like you haven't generated a Personal Access Token yet,\nwhich is required to run Open Framework scripts.\nDo you want to generate one now?")) {
 						return generate_apiv2_key();
@@ -151,26 +151,24 @@
 		}
 
 		function parse_token_page(html) {
-			var page = $(html);
-			var form = page.find('form.new_personal_access_token');
-			var hidden_inputs = form.find('input[type="hidden"]');
-			var checkboxes = form.find('input[type="checkbox"]');
-			var submit_url = form.attr('action');
-			var data = {};
+			let page = new DOMParser().parseFromString(html, 'text/html');
+			let form = page.querySelector('form.new_personal_access_token');
+			let hidden_inputs = Array.from(form.querySelectorAll('input[type="hidden"]'));
+			let checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"]'));
+			let submit_url = form.attributes['action'].value;
+			let data = [].concat(
+				hidden_inputs.map((elem) => [elem.attributes.name.value, elem.attributes.value.value]),
+				checkboxes.map((elem) => [elem.attributes.name.value, '0']),
+				[['personal_access_token[description]', 'Open Framework (read-only)']]
+			).map((kv)=>kv.map(encodeURIComponent).join('=')).join('&');
 
-			hidden_inputs.each(parse_hidden_inputs);
-			checkboxes.each(parse_checkboxes);
-			data['personal_access_token[description]'] = 'Open Framework (read-only)';
-
-			return $.post(submit_url, data);
-
-			function parse_hidden_inputs(idx, elem) {
-				data[elem.attributes.name.value] = elem.attributes.value.value;
-			}
-
-			function parse_checkboxes(idx, elem) {
-				data[elem.attributes.name.value] = '0';
-			}
+			return fetch(submit_url, {
+				method:'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+				},
+				body: data
+			});
 		}
 	}
 
@@ -178,18 +176,18 @@
 	// Fetch a URL asynchronously, and pass the result as resolved Promise data.
 	//------------------------------
 	function fetch_endpoint(endpoint, options) {
-		var retry_cnt, endpoint_data, url, headers;
-		var progress_data = {name:'wk_api_'+endpoint, label:'Wanikani '+endpoint, value:0, max:100};
-		var bad_key_cnt = 0;
+		let retry_cnt, endpoint_data, url, headers;
+		let progress_data = {name:'wk_api_'+endpoint, label:'Wanikani '+endpoint, value:0, max:100};
+		let bad_key_cnt = 0;
 
 		// Parse options.
 		if (!options) options = {};
-		var filters = options.filters;
+		let filters = options.filters;
 		if (!filters) filters = {};
-		var progress_callback = options.progress_callback;
+		let progress_callback = options.progress_callback;
 
 		// Get timestamp of last fetch from options (if specified)
-		var last_update = options.last_update;
+		let last_update = options.last_update;
 
 		// If no prior fetch... (i.e. no valid last_update)
 		if (typeof last_update !== 'string' && !(last_update instanceof Date)) {
@@ -211,16 +209,16 @@
 
 		// Add user-specified data filters to the URL
 		filters.updated_after = last_update;
-		var arr = [];
-		for (var name in filters) {
-			var value = filters[name];
+		let arr = [];
+		for (let name in filters) {
+			let value = filters[name];
 			if (Array.isArray(value)) value = value.join(',');
 			arr.push(name+'='+value);
 		}
 		url += '?'+arr.join('&');
 
 		// Get API key and fetch the data.
-		var fetch_promise = promise();
+		let fetch_promise = promise();
 		get_apikey()
 		.then(setup_and_fetch);
 
@@ -242,10 +240,10 @@
 		//============
 		function fetch() {
 			retry_cnt++;
-			var request = new XMLHttpRequest();
+			let request = new XMLHttpRequest();
 			request.onreadystatechange = received;
 			request.open('GET', url, true);
-			for (var key in headers)
+			for (let key in headers)
 				request.setRequestHeader(key, headers[key]);
 			request.send();
 		}
@@ -258,12 +256,12 @@
 			// Check for rate-limit error.  Delay and retry if necessary.
 			if (this.status === 429 && retry_cnt < 40) {
 				// Check for "ratelimit-reset" header. Delay until the specified time.
-				var resetTime = parseInt(this.getResponseHeader("ratelimit-reset"));
+				let resetTime = parseInt(this.getResponseHeader("ratelimit-reset"));
 				if (resetTime) {
-					var timeRemaining = (resetTime * 1000) - Date.now();
+					let timeRemaining = (resetTime * 1000) - Date.now();
 					setTimeout(fetch, timeRemaining + 500);
 				} else {
-					var delay = Math.min((retry_cnt * 250), 2000);
+					let delay = Math.min((retry_cnt * 250), 2000);
 					setTimeout(fetch, delay);
 				}
 				return;
@@ -283,13 +281,13 @@
 			}
 
 			// Process the response data.
-			var json = JSON.parse(event.target.response);
+			let json = JSON.parse(event.target.response);
 
 			// Data may be a single object, or collection of objects.
 			// Collections are paginated, so we may need more fetches.
 			if (json.object === 'collection') {
 				// It's a multi-page endpoint.
-				var first_new, so_far, total;
+				let first_new, so_far, total;
 				if (endpoint_data === undefined) {
 					// First page of results.
 					first_new = 0;
@@ -358,8 +356,8 @@
 	}
 
 
-	var min_update_interval = 60;
-	var ep_cache = {};
+	let min_update_interval = 60;
+	let ep_cache = {};
 
 	//------------------------------
 	// Get endpoint data from cache with updates from API.
@@ -370,7 +368,7 @@
 		// We cache data for 'min_update_interval' seconds.
 		// If within that interval, we return the cached data.
 		// User can override cache via "options.force_update = true"
-		var ep_info = ep_cache[ep_name];
+		let ep_info = ep_cache[ep_name];
 		if (ep_info) {
 			// If still awaiting prior fetch return pending promise.
 			// Also, not force_update, return non-expired cache (i.e. resolved promise)
@@ -382,11 +380,11 @@
 		}
 
 		// Create a promise to fetch data.  The resolved promise will also serve as cache.
-		var get_promise = promise();
+		let get_promise = promise();
 		ep_cache[ep_name] = {promise: get_promise};
 
 		// Make sure the requested endpoint is valid.
-		var merged_data;
+		let merged_data;
 
 		// Perform the fetch, and process the data.
 		wkof.file_cache.load('Apiv2.'+ep_name)
@@ -397,7 +395,7 @@
 		function fetch(cache_data) {
 			if (typeof cache_data === 'string') cache_data = {last_update:null};
 			merged_data = cache_data;
-			var fetch_options = Object.assign({}, options);
+			let fetch_options = Object.assign({}, options);
 			fetch_options.last_update = cache_data.last_update;
 			fetch_endpoint(ep_name, fetch_options)
 			.then(process_api_data, handle_error);
@@ -411,8 +409,8 @@
 			// Process data according to whether it is paginated or not.
 			if (fetched_data.object === 'collection') {
 				if (merged_data.data === undefined) merged_data.data = {};
-				for (var idx = 0; idx < fetched_data.data.length; idx++) {
-					var item = fetched_data.data[idx];
+				for (let idx = 0; idx < fetched_data.data.length; idx++) {
+					let item = fetched_data.data[idx];
 					merged_data.data[item.id] = item;
 				}
 			} else {
@@ -456,7 +454,7 @@
 	// Make sure user cache matches the current (or override) user.
 	//------------------------------
 	function validate_user_cache() {
-		var user = get_username();
+		let user = get_username();
 		if (!user) {
 			// Username unavailable if not logged in, or if on Lessons or Reviews pages.
 			// If not logged in, stop running the framework.
@@ -465,7 +463,7 @@
 			skip_username_check = true;
 		}
 
-		var apikey = localStorage.getItem('apiv2_key_override');
+		let apikey = localStorage.getItem('apiv2_key_override');
 		if (apikey !== null) {
 			// It looks like we're trying to override the apikey (e.g. for debug)
 			using_apikey_override = true;
