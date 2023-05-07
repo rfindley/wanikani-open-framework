@@ -2,8 +2,8 @@
 // @name        Wanikani Open Framework - ItemData module
 // @namespace   rfindley
 // @description ItemData module for Wanikani Open Framework
-// @version     1.0.18
-// @copyright   2018+, Robin Findley
+// @version     1.0.19
+// @copyright   2018-2023, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
@@ -25,7 +25,7 @@
 	};
 	//########################################################################
 
-	function promise(){var a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
+	function promise(){let a,b,c=new Promise(function(d,e){a=d;b=e;});c.resolve=a;c.reject=b;return c;}
 	function split_list(str) {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0);});}
 
 	//------------------------------
@@ -37,19 +37,19 @@
 
 		// Allow comma-separated list of WK-only endpoints.
 		if (typeof config === 'string') {
-			var endpoints = split_list(config)
-			var config = {wk_items:{options:{}}};
-			for (var idx in endpoints)
+			let endpoints = split_list(config)
+			config = {wk_items:{options:{}}};
+			for (let idx in endpoints)
 				config.wk_items.options[endpoints[idx]] = true;
 		}
 
 		// Fetch the requested endpoints.
-		var fetch_promise = promise();
-		var items = [];
-		var remaining = 0;
-		for (var cfg_name in config) {
-			var cfg = config[cfg_name];
-			var spec = wkof.ItemData.registry.sources[cfg_name];
+		let fetch_promise = promise();
+		let items = [];
+		let remaining = 0;
+		for (let cfg_name in config) {
+			let cfg = config[cfg_name];
+			let spec = wkof.ItemData.registry.sources[cfg_name];
 			if (!spec || typeof spec.fetcher !== 'function') {
 				console.log('wkof.ItemData.get_items() - Config "'+cfg_name+'" not registered!');
 				continue;
@@ -57,7 +57,7 @@
 			remaining++;
 			spec.fetcher(cfg, global_options)
 			.then(function(data){
-				var filter_promise;
+				let filter_promise;
 				if (typeof spec === 'object')
 					filter_promise = apply_filters(data, cfg, spec);
 				else
@@ -83,24 +83,24 @@
 	// Get the wk_items specified by the configuration.
 	//------------------------------
 	function get_wk_items(config, options) {
-		var cfg_options = config.options || {};
+		let cfg_options = config.options || {};
 		options = options || {};
-		var now = new Date().getTime();
+		let now = new Date().getTime();
 
 		// Endpoints that we can fetch (subjects MUST BE FIRST!!)
-		var available_endpoints = ['subjects','assignments','review_statistics','study_materials'];
-		var spec = wkof.ItemData.registry.sources.wk_items;
-		for (var filter_name in config.filters) {
-			var filter_spec = spec.filters[filter_name];
+		let available_endpoints = ['subjects','assignments','review_statistics','study_materials'];
+		let spec = wkof.ItemData.registry.sources.wk_items;
+		for (let filter_name in config.filters) {
+			let filter_spec = spec.filters[filter_name];
 			if (!filter_spec || typeof filter_spec.set_options !== 'function') continue;
-			var filter_cfg = config.filters[filter_name];
+			let filter_cfg = config.filters[filter_name];
 			filter_spec.set_options(cfg_options, filter_cfg.value);
 		}
 
 		// Fetch all of the endpoints
-		var ep_promises = [];
-		for (var idx in available_endpoints) {
-			var ep_name = available_endpoints[idx];
+		let ep_promises = [];
+		for (let idx in available_endpoints) {
+			let ep_name = available_endpoints[idx];
 			if (ep_name === 'subjects' || cfg_options[ep_name] === true)
 				ep_promises.push(
 					wkof.Apiv2.get_endpoint(ep_name, options)
@@ -121,9 +121,9 @@
 
 		//============
 		function cross_link(ep_name, ep_data, subjects) {
-			for (var id in ep_data) {
-				var record = ep_data[id];
-				var subject_id = record.data.subject_id;
+			for (let id in ep_data) {
+				let record = ep_data[id];
+				let subject_id = record.data.subject_id;
 				subjects[subject_id][ep_name] = record.data;
 			}
 		}
@@ -133,21 +133,21 @@
 	// Filter the items array according to the specified filters and options.
 	//------------------------------
 	function apply_filters(items, config, spec) {
-		var prep_promises = [];
-		var options = config.options || {};
-		var filters = [];
-		var is_wk_items = (spec === wkof.ItemData.registry.sources.wk_items);
-		for (var filter_name in config.filters) {
-			var filter_cfg = config.filters[filter_name];
+		let prep_promises = [];
+		let options = config.options || {};
+		let filters = [];
+		let is_wk_items = (spec === wkof.ItemData.registry.sources.wk_items);
+		for (let filter_name in config.filters) {
+			let filter_cfg = config.filters[filter_name];
 			if (typeof filter_cfg !== 'object' || filter_cfg.value === undefined)
 				filter_cfg = {value:filter_cfg};
-			var filter_value = filter_cfg.value;
-			var filter_spec = spec.filters[filter_name];
+			let filter_value = filter_cfg.value;
+			let filter_spec = spec.filters[filter_name];
 			if (filter_spec === undefined) throw new Error('wkof.ItemData.get_item() - Invalid filter "'+filter_name+'"');
 			if (typeof filter_spec.filter_value_map === 'function')
 				filter_value = filter_spec.filter_value_map(filter_cfg.value);
 			if (typeof filter_spec.prepare === 'function') {
-				var result = filter_spec.prepare(filter_value);
+				let result = filter_spec.prepare(filter_value);
 				if (result instanceof Promise) prep_promises.push(result);
 			}
 			filters.push({
@@ -167,14 +167,14 @@
 		}
 
 		return Promise.all(prep_promises).then(function(){
-			var result = [];
-			var max_level = Math.max(wkof.user.subscription.max_level_granted, wkof.user.override_max_level || 0);
-			for (var item_idx in items) {
-				var keep = true;
-				var item = items[item_idx];
+			let result = [];
+			let max_level = Math.max(wkof.user.subscription.max_level_granted, wkof.user.override_max_level || 0);
+			for (let item_idx in items) {
+				let keep = true;
+				let item = items[item_idx];
 				if (is_wk_items && (item.data.level > max_level)) continue;
-				for (var filter_idx in filters) {
-					var filter = filters[filter_idx];
+				for (let filter_idx in filters) {
+					let filter = filters[filter_idx];
 					try {
 						keep = filter.func(filter.filter_value, item);
 						if (filter.invert) keep = !keep;
@@ -194,7 +194,7 @@
 	// Return the items indexed by an indexing function.
 	//------------------------------
 	function get_index(items, index_name) {
-		var index_func = wkof.ItemData.registry.indices[index_name];
+		let index_func = wkof.ItemData.registry.indices[index_name];
 		if (typeof index_func !== 'function') throw new Error('wkof.ItemData.index_by() - Invalid index function "'+index_name+'"');
 		return index_func(items);
 	}
@@ -229,11 +229,11 @@
 			item_type: {
 				type: 'multi',
 				label: 'Item type',
-				content: {radical:'Radicals',kanji:'Kanji',vocabulary:'Vocabulary'},
+				content: {radical:'Radicals',kanji:'Kanji',vocabulary:'Vocabulary',kana_vocabulary:'Kana Vocabulary'},
 				default: [],
 				filter_value_map: item_type_to_arr,
 				filter_func: function(filter_value, item){return filter_value[item.object] === true;},
-				hover_tip: 'Filter by item type (radical, kanji, vocabulary)',
+				hover_tip: 'Filter by item type (radical, kanji, vocabulary, kana_vocabulary)',
 			},
 			level: {
 				type: 'text',
@@ -270,11 +270,11 @@
 	// Set make_subarrays to true if more than one item can share the same field value (e.g. same item_type).
 	//------------------------------
 	function make_index_func(name, field, entry_type) {
-		var fn = '';
+		let fn = '';
 		fn +=
-			'var index = {}, value;\n'+
-			'for (var idx in items) {\n'+
-			'    var item = items[idx];\n'+
+			'let index = {}, value;\n'+
+			'for (let idx in items) {\n'+
+			'    let item = items[idx];\n'+
 			'    try {\n'+
 			'        value = '+field+';\n'+
 			'    } catch(e) {continue;}\n'+
@@ -317,14 +317,14 @@
 	// Index by reading
 	//------------------------------
 	wkof.ItemData.registry.indices['reading'] = function(items) {
-		var index = {};
-		for (var idx in items) {
-			var item = items[idx];
+		let index = {};
+		for (let idx in items) {
+			let item = items[idx];
 			if (!item.hasOwnProperty('data') || !item.data.hasOwnProperty('readings')) continue;
 			if (!Array.isArray(item.data.readings)) continue;
-			var readings = item.data.readings;
-			for (var idx2 in readings) {
-				var reading = readings[idx2].reading;
+			let readings = item.data.readings;
+			for (let idx2 in readings) {
+				let reading = readings[idx2].reading;
 				if (reading === 'None') continue;
 				if (!index[reading]) index[reading] = [];
 				index[reading].push(item);
@@ -334,16 +334,16 @@
 	}
 
 	//------------------------------
-	// Given an array of item type criteria (e.g. ['rad', 'kan', 'voc']), return
+	// Given an array of item type criteria (e.g. ['rad', 'kan', 'voc','kana_voc']), return
 	// an array containing 'true' for each item type contained in the criteria.
 	//------------------------------
 	function item_type_to_arr(filter_value) {
-		var xlat = {rad:'radical',kan:'kanji',voc:'vocabulary'};
-		var arr = {}, value;
+		let xlat = {rad:'radical',kan:'kanji',voc:'vocabulary',kana_voc:'kana_vocabulary'};
+		let arr = {}, value;
 		if (typeof filter_value === 'string') filter_value = split_list(filter_value);
 		if (typeof filter_value !== 'object') return {};
 		if (Array.isArray(filter_value)) {
-			for (var idx in filter_value) {
+			for (let idx in filter_value) {
 				value = filter_value[idx];
 				value = xlat[value] || value;
 				arr[value] = true;
@@ -361,12 +361,12 @@
 	// array containing 'true' for each srs level contained in the criteria.
 	//------------------------------
 	function srs_to_arr(filter_value) {
-		var index = ['lock','init','appr1','appr2','appr3','appr4','guru1','guru2','mast','enli','burn'];
-		var arr = [], value;
+		let index = ['lock','init','appr1','appr2','appr3','appr4','guru1','guru2','mast','enli','burn'];
+		let arr = [], value;
 		if (typeof filter_value === 'string') filter_value = split_list(filter_value);
 		if (typeof filter_value !== 'object') return {};
 		if (Array.isArray(filter_value)) {
-			for (var idx in filter_value) {
+			for (let idx in filter_value) {
 				value = Number(filter_value[idx]);
 				if (isNaN(value)) value = index.indexOf(filter_value[idx]) - 1;
 				arr[value] = true;
@@ -384,16 +384,16 @@
 	// 'true' for each level contained in the criteria.
 	//------------------------------
 	function levels_to_arr(filter_value) {
-		var levels = [], crit_idx, start, stop, lvl;
+		let levels = [], crit_idx, start, stop, lvl;
 
 		// Process each comma-separated criteria separately.
-		var criteria = filter_value.split(',');
+		let criteria = filter_value.split(',');
 		for (crit_idx = 0; crit_idx < criteria.length; crit_idx++) {
-			var crit = criteria[crit_idx];
-			var value = true;
+			let crit = criteria[crit_idx];
+			let value = true;
 
 			// Match '*' = all levels
-			var match = crit.match(/^\s*["']?\s*(\*)\s*["']?\s*$/);
+			let match = crit.match(/^\s*["']?\s*(\*)\s*["']?\s*$/);
 			if (match !== null) {
 				start = to_num('1');
 				stop = to_num('9999'); // All levels
@@ -421,7 +421,7 @@
 				levels[lvl] = value;
 				continue;
 			}
-			var err = 'wkof.ItemData::levels_to_arr() - Bad filter criteria "'+filter_value+'"';
+			let err = 'wkof.ItemData::levels_to_arr() - Bad filter criteria "'+filter_value+'"';
 			console.log(err);
 			throw err;
 		}
@@ -434,9 +434,9 @@
 		}
 	}
 
-	var registration_promise;
-	var registration_timeout;
-	var registration_counter = 0;
+	let registration_promise;
+	let registration_timeout;
+	let registration_counter = 0;
 	//------------------------------
 	// Ask clients to add items to the registry.
 	//------------------------------
