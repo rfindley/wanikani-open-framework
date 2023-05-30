@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.15
+// @version     1.0.16
 // @copyright   2022+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -50,6 +50,7 @@
 			if (!document.querySelector('style[name="scripts_submenu"]')) {
 				document.head.insertAdjacentHTML('beforeend',
 					`<style name="scripts_submenu">
+					.character-header {z-index:1;}
 					.character-header__menu-navigation a {text-decoration:none;}
 					.character-header__menu-navigation-link {margin-right: 8px;}
 					#scripts-menu {text-shadow:none;}
