@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.16
+// @version     1.0.17
 // @copyright   2022+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -43,7 +43,7 @@
 		let summary_button, scripts_icon;
 
 		// Install html.
-		if (location.pathname.match(/^\/subjects\/(review|[^\/]+\/lesson|extra_study)/) !== null) {
+		if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
 			summary_button = document.querySelector('.summary-button');
 
 			// Install css and html.
@@ -178,7 +178,7 @@
 			for (let submenu of link.parentElement.querySelectorAll('.scripts-submenu.open')) {
 				if (submenu !== link) submenu.classList.remove('open');
 			};
-			if (location.pathname.match(/^\/subjects\/(review|[^\/]+\/lesson|extra_study)/) !== null) {
+			if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
 				link.classList.toggle('open');
 			} else if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
 				link.classList.toggle('open');
@@ -229,7 +229,7 @@
 		let scripts_header = document.querySelector('.scripts-header');
 		if (!scripts_header) return;
 
-		if (location.pathname.match(/^\/subjects\/(review|[^\/]+\/lesson|extra_study)/) !== null) {
+		if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
 			scripts_header.insertAdjacentHTML('afterend',
 				`<li class="scripts-submenu" name="${safe_name}">
 					<a href="#">${safe_text}</a>
@@ -279,7 +279,7 @@
 			let submenu = install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			if (location.pathname.match(/^\/subjects\/(review|[^\/]+\/lesson|extra_study)/) !== null) {
+			if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
 				menu = submenu.querySelector('.dropdown-menu');
 			} else if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
 				menu = submenu.querySelector('.dropdown-menu');
