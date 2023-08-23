@@ -2,10 +2,10 @@
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.1.5
+// @version     1.1.7
 // @match       https://www.wanikani.com/*
 // @match       https://preview.wanikani.com/*
-// @copyright   2022+, Robin Findley
+// @copyright   2018-2023, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // @run-at      document-start
 // @grant       none
@@ -17,7 +17,7 @@
 	/* eslint no-multi-spaces: off */
 	/* globals wkof */
 
-	const version = '1.1.4';
+	const version = '1.1.7';
 	let ignore_missing_indexeddb = false;
 
 	//########################################################################
@@ -28,7 +28,7 @@
 		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=1180673'},
 		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=1187212'},
 		Jquery:   { url: 'https://greasyfork.org/scripts/451078-wanikani-open-framework-jquery-module/code/Wanikani%20Open%20Framework%20-%20Jquery%20module.js?version=1091794'},
-		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=1213065'},
+		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=1239374'},
 		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=1091792'},
 		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=1091793'},
 	};

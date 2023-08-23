@@ -2,8 +2,8 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.17
-// @copyright   2022+, Robin Findley
+// @version     1.0.20
+// @copyright   2018-2023, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
@@ -43,7 +43,8 @@
 		let summary_button, scripts_icon;
 
 		// Install html.
-		if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
+		if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null ||
+			location.pathname.match(/^\/recent-mistakes\/[^\/]+\/quiz/) !== null) {
 			summary_button = document.querySelector('.summary-button');
 
 			// Install css and html.
@@ -92,51 +93,6 @@
 
 			scripts_icon.addEventListener('click', scripts_icon_click);
 
-		} else if (location.pathname.match(/^\/(lesson|review|extra_study)\/session/) !== null) {
-			summary_button = document.querySelector('#summary-button .fa-home').closest('a');
-
-			// Install css and html.
-			if (!document.querySelector('style[name="scripts_submenu"]')) {
-				document.head.insertAdjacentHTML('beforeend',
-					`<style name="scripts_submenu">
-					.character-header__menu-navigation a {text-decoration:none;}
-					.character-header__menu-navigation-link {margin-right: 8px;}
-					#scripts-menu {text-shadow:none;}
-					#scripts-menu.scripts-menu-icon {display:inline-block;}
-					#scripts-menu .scripts-icon {display:inline-block;}
-					#scripts-menu:not(.open) > .dropdown-menu {display:none;}
-					#scripts-menu .scripts-submenu:not(.open) > .dropdown-menu {display:none;}
-					#scripts-menu ul.dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333; display:block;}
-					#scripts-menu ul.dropdown-menu > li {text-align:left; color:#333; white-space:nowrap; line-height:20px; padding:3px 0; display:list-item;}
-					#scripts-menu ul.dropdown-menu > li.scripts-header {text-transform:uppercase; font-size:11px; font-weight:bold; padding:3px 20px; display:list-item;}
-					#scripts-menu ul.dropdown-menu > li:hover:not(.scripts-header) {background-color:rgba(0,0,0,0.15)}
-					#scripts-menu ul.dropdown-menu a {padding:3px 20px; color:#333; opacity:1;}
-					#scripts-menu .scripts-submenu {position:relative;}
-					#scripts-menu .scripts-submenu > a:after {content:"\uf0da"; font-family:"FontAwesome"; position:absolute; top:0; right:0; padding:3px 4px 3px 0;}
-					#scripts-menu .scripts-submenu .dropdown-menu {left:100%; top:-6px;}
-					</style>`
-				);
-			}
-
-			summary_button.insertAdjacentHTML('afterend',
-				`<div id="scripts-menu" class="scripts-menu-icon">
-					<a class="scripts-icon" href="#"><i class="fa fa-gear" title="Script Menu"></i></a>
-					<ul class="dropdown-menu">
-						<li class="scripts-header">Script Menu</li>
-					</ul>
-				</div>`
-			);
-			top_menu = document.querySelector('#scripts-menu');
-			scripts_icon = document.querySelector('#scripts-menu > a.scripts-icon');
-
-			function scripts_icon_click(e) {
-				e.preventDefault();
-				e.stopPropagation();
-				top_menu.classList.toggle('open');
-				if (top_menu.classList.contains('open')) document.body.addEventListener('click', body_click);
-			}
-
-			scripts_icon.addEventListener('click', scripts_icon_click);
 		} else {
 			// Install css and html.
 			top_menu = document.querySelector('button[class$="account"]');
@@ -178,9 +134,8 @@
 			for (let submenu of link.parentElement.querySelectorAll('.scripts-submenu.open')) {
 				if (submenu !== link) submenu.classList.remove('open');
 			};
-			if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
-				link.classList.toggle('open');
-			} else if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
+			if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null ||
+				location.pathname.match(/^\/recent-mistakes\/[^\/]+\/quiz/) !== null) {
 				link.classList.toggle('open');
 			} else {
 				let menu = document.querySelector('#sitemap__account,[id="#sitemap__account"]');
@@ -229,14 +184,8 @@
 		let scripts_header = document.querySelector('.scripts-header');
 		if (!scripts_header) return;
 
-		if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
-			scripts_header.insertAdjacentHTML('afterend',
-				`<li class="scripts-submenu" name="${safe_name}">
-					<a href="#">${safe_text}</a>
-					<ul class="dropdown-menu"></ul>
-				</li>`
-			);
-		} else if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
+		if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null ||
+			location.pathname.match(/^\/recent-mistakes\/[^\/]+\/quiz/) !== null) {
 			scripts_header.insertAdjacentHTML('afterend',
 				`<li class="scripts-submenu" name="${safe_name}">
 					<a href="#">${safe_text}</a>
@@ -279,9 +228,8 @@
 			let submenu = install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null) {
-				menu = submenu.querySelector('.dropdown-menu');
-			} else if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
+			if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null ||
+				location.pathname.match(/^\/recent-mistakes\/[^\/]+\/quiz/) !== null) {
 				menu = submenu.querySelector('.dropdown-menu');
 			} else {
 				menu = submenu.querySelector('.dropdown-menu>ul');
@@ -295,7 +243,8 @@
 			classes = ['sitemap__page', 'script-link'];
 			if (config.class) classes.push(config.class_html);
 			link.setAttribute('class', classes.join(' '));
-			if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
+			if (location.pathname.match(/^\/subjects\/(review|lesson|[^\/]+\/lesson|extra_study)/) !== null ||
+				location.pathname.match(/^\/recent-mistakes\/[^\/]+\/quiz/) !== null) {
 				scripts_header.after(link);
 			} else {
 				scripts_header.append(link);
