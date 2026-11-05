@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Menu module
 // @namespace   rfindley
 // @description Menu module for Wanikani Open Framework
-// @version     1.0.25
+// @version     1.0.26
 // @copyright   2018-2024, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -34,10 +34,26 @@
 		document.body.removeEventListener('click', body_click);
 	}
 
+	//------------------------------
+	// Return an <svg> element to hold icon <symbol>s.
+	// Uses WaniKani's inline icon sprite when present; otherwise creates
+	// a hidden sprite of our own, so a WaniKani markup change can't crash us.
+	//------------------------------
+	function get_icon_sprite() {
+		let svg = document.querySelector('svg symbol[id^="wk-icon"]')?.closest('svg');
+		if (svg) return svg;
+		svg = document.getElementById('wkof-icon-sprite');
+		if (!svg) {
+			document.body.insertAdjacentHTML('afterbegin',
+				'<svg id="wkof-icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg>');
+			svg = document.getElementById('wkof-icon-sprite');
+		}
+		return svg;
+	}
+
 	function insert_gear_icon() {
 		if (!document.getElementById('wk-icon__gear')) {
-			let svg = document.querySelector('svg symbol[id^="wk-icon"]').closest('svg');
-			svg.insertAdjacentHTML('beforeend','<symbol id="wk-icon__gear" viewport="0 0 500 500"><path d="M405,310L492,310L492,195L405,190L379,146L423,71L319,8L275,85L225,85L181,8L77,71L121,146L95,190L8,190L8,310L95,310L121,354L77,429L181,492L225,415L275,415L319,492L423,429L379,354L405,310L325,281L281,325L219,325L176,281L176,219L219,176L281,176L325,219L325,281Z"></path></symbol>');
+			get_icon_sprite().insertAdjacentHTML('beforeend','<symbol id="wk-icon__gear" viewBox="0 0 500 500"><path d="M405,310L492,310L492,195L405,190L379,146L423,71L319,8L275,85L225,85L181,8L77,71L121,146L95,190L8,190L8,310L95,310L121,354L77,429L181,492L225,415L275,415L319,492L423,429L379,354L405,310L325,281L281,325L219,325L176,281L176,219L219,176L281,176L325,219L325,281Z"></path></symbol>');
 		}
 	}
 
@@ -91,6 +107,7 @@
 			 location.pathname.match(/^\/subject-lessons\//) !== null ||
 			 location.pathname.match(/^\/recent-mistakes\/[^\/]+\/quiz/) !== null) {
 			summary_button = document.querySelector('.summary-button');
+			if (!summary_button) return false;
 
 			insert_gear_icon();
 			summary_button.parentElement.insertAdjacentHTML('afterend',
