@@ -73,6 +73,7 @@
 				.character-header__menu-navigation a {text-decoration:none;}
 				.character-header__menu-navigation-link {margin-right: 8px;}
 				#scripts-menu.menu-type-quiz {text-shadow:none;}
+				#scripts-menu svg.wk-icon {width:1em; height:1em; fill:currentColor; vertical-align:middle;}
 				#scripts-menu.menu-type-quiz:not(.open) > .dropdown-menu {display:none;}
 				#scripts-menu.menu-type-quiz .scripts-submenu:not(.open) > .dropdown-menu {display:none;}
 				#scripts-menu.menu-type-quiz ul.dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333; display:block;}
