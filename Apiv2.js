@@ -2,7 +2,7 @@
 // @name        Wanikani Open Framework - Apiv2 module
 // @namespace   rfindley
 // @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.14
+// @version     1.0.15
 // @copyright   2018+, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -113,7 +113,7 @@
 
 		function parse_page(html){
 			let page = new DOMParser().parseFromString(html, 'text/html');
-			let apikey = page.querySelector('.personal-access-token-token > code')?.textContent.trim() || '';
+			let apikey = page.querySelector('.api-tokens__tokens .wk-code')?.textContent.trim() || '';
 			if (!wkof.Apiv2.is_valid_apikey_format(apikey)) {
 				let status = localStorage.getItem('wkof_generate_token');
 				if (status === null) {
@@ -152,14 +152,15 @@
 
 		function parse_token_page(html) {
 			let page = new DOMParser().parseFromString(html, 'text/html');
-			let form = page.querySelector('form.new_personal_access_token');
-			let hidden_inputs = Array.from(form.querySelectorAll('input[type="hidden"]'));
+			let form = page.querySelector('.wk-form');
+			let hidden_inputs = Array.from(form.querySelectorAll('input[type="hidden"][name="authenticity_token"]'));
 			let checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"]'));
 			let submit_url = form.attributes['action'].value;
 			let data = [].concat(
 				hidden_inputs.map((elem) => [elem.attributes.name.value, elem.attributes.value.value]),
+				[['description', 'Open+Framework+%28read-only%29']],
 				checkboxes.map((elem) => [elem.attributes.name.value, '0']),
-				[['personal_access_token[description]', 'Open Framework (read-only)']]
+				[['button','']]
 			).map((kv)=>kv.map(encodeURIComponent).join('=')).join('&');
 
 			return fetch(submit_url, {

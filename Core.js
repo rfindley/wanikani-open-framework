@@ -1,14 +1,16 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name        Wanikani Open Framework
 // @namespace   rfindley
 // @description Framework for writing scripts for Wanikani
-// @version     1.1.7
+// @version     1.2.11
 // @match       https://www.wanikani.com/*
 // @match       https://preview.wanikani.com/*
-// @copyright   2018-2023, Robin Findley
+// @copyright   2018-2024, Robin Findley
 // @license     MIT; http://opensource.org/licenses/MIT
 // @run-at      document-start
 // @grant       none
+// @downloadURL https://update.greasyfork.org/scripts/38582/Wanikani%20Open%20Framework.user.js
+// @updateURL https://update.greasyfork.org/scripts/38582/Wanikani%20Open%20Framework.meta.js
 // ==/UserScript==
 
 (function(global) {
@@ -17,7 +19,7 @@
 	/* eslint no-multi-spaces: off */
 	/* globals wkof */
 
-	const version = '1.1.7';
+	const version = '1.2.11';
 	let ignore_missing_indexeddb = false;
 
 	//########################################################################
@@ -25,12 +27,12 @@
 	// Supported Modules
 	//------------------------------
 	const supported_modules = {
-		Apiv2:    { url: 'https://greasyfork.org/scripts/38581-wanikani-open-framework-apiv2-module/code/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js?version=1180673'},
-		ItemData: { url: 'https://greasyfork.org/scripts/38580-wanikani-open-framework-itemdata-module/code/Wanikani%20Open%20Framework%20-%20ItemData%20module.js?version=1187212'},
-		Jquery:   { url: 'https://greasyfork.org/scripts/451078-wanikani-open-framework-jquery-module/code/Wanikani%20Open%20Framework%20-%20Jquery%20module.js?version=1091794'},
-		Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=1239374'},
-		Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=1091792'},
-		Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=1091793'},
+		Apiv2:    { url: 'https://update.greasyfork.org/scripts/38581/1402158/Wanikani%20Open%20Framework%20-%20Apiv2%20module.js'},
+		ItemData: { url: 'https://update.greasyfork.org/scripts/38580/1187212/Wanikani%20Open%20Framework%20-%20ItemData%20module.js'},
+		Jquery:   { url: 'https://update.greasyfork.org/scripts/451078/1091794/Wanikani%20Open%20Framework%20-%20Jquery%20module.js'},
+		Menu:     { url: 'https://update.greasyfork.org/scripts/38578/1988323/Wanikani%20Open%20Framework%20-%20Menu%20module.js'},
+		Progress: { url: 'https://update.greasyfork.org/scripts/38577/1091792/Wanikani%20Open%20Framework%20-%20Progress%20module.js'},
+		Settings: { url: 'https://update.greasyfork.org/scripts/38576/1091793/Wanikani%20Open%20Framework%20-%20Settings%20module.js'},
 	};
 
 	//########################################################################
@@ -38,7 +40,7 @@
 	// Published interface
 	//------------------------------
 	const published_interface = {
-		on_page_event: on_page_event,  // on_pages({urls:[], load:func, unload:func})
+		on_pageload: on_pageload,      // on_pageload(urls, load_handler [, unload_handler])
 
 		include: include,              // include(module_list)        => Promise
 		ready:   ready,                // ready(module_list)          => Promise
@@ -332,39 +334,107 @@
 	}
 
 	//------------------------------
-	// Add handlers for page events for a list of URLs.
+	// Add handlers for page load events for a list of URLs.
 	//------------------------------
-	let page_handlers = [];
-	let last_page_loaded = '!'
-	function on_page_event(config) {
-		if (!Array.isArray(config.urls)) config.urls = [config.urls];
-		config.urls = config.urls.map((url) => {
-			if (url instanceof RegExp) return url;
-			if (typeof url !== 'string') return null;
-			return new RegExp(url.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*','.*'));
-		}).filter(url => url !== null);
-		page_handlers.push(config);
-        if (config.load) {
-            config.urls.forEach(url => {
-                if (!url.test(last_page_loaded)) return;
-                config.load();
-            });
-        }
+	let regex_store = {};
+	let pgld_req_store = [];
+	let current_page = '!';
+	function on_pageload(url_patterns, load_handler, unload_handler) {
+		if (!Array.isArray(url_patterns)) url_patterns = [url_patterns];
+
+		let pgld_req = {url_patterns, load_handler, unload_handler, pattern_idx:-1, next_pattern_idx:-1};
+		pgld_req_store.push(pgld_req);
+
+		url_patterns.forEach((pattern, pattern_idx) => {
+			let regex;
+			if (typeof pattern === 'string') {
+				regex = new RegExp('^'+pattern.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replaceAll('*','.*')+'$');
+			} else if (pattern instanceof RegExp) {
+				regex = pattern;
+			} else {
+				return;
+			}
+
+			let regex_str = regex.toString();
+			let regex_entry;
+			if (!regex_store[regex_str]) {
+				regex_store[regex_str] = regex_entry = {regex, pgld_reqs:[]};
+			} else {
+				regex_entry = regex_store[regex_str];
+				regex = regex_entry.regex;
+			}
+			regex_entry.pgld_reqs.push({pgld_req, pattern_idx});
+
+			// Call 'load' callback now if the current URL matches.
+			if (pgld_req.pattern_idx !== -1) return;
+			if (regex.test(current_page)) {
+				pgld_req.pattern_idx = pattern_idx;
+				try {
+					load_handler(current_page, pattern_idx);
+				} catch(e) {}
+			}
+		});
 	}
 
 	//------------------------------
-	// Call page event handlers.
+	// Call pageload handlers.
 	//------------------------------
-	function handle_page_events(event_name, event) {
-        if (event) {
-            last_page_loaded = event.detail.url;
-        } else {
-            last_page_loaded = window.location.href
-        }
-        page_handlers.forEach(handler => {
-            if (!handler.urls.find(url => url.test(last_page_loaded))) return;
-            if (typeof handler[event_name] === 'function') handler[event_name](event_name);
-        });
+	function handle_pageload(event) {
+		let last_page = current_page;
+		if (event) {
+			current_page = (new URL(event.detail.url)).pathname;
+		} else {
+			current_page = window.location.pathname;
+		}
+
+		// Update the active status of all monitored URL patterns.
+		Object.keys(regex_store).forEach((key, key_idx) => {
+			let regex_entry = regex_store[key];
+			let is_active = regex_entry.regex.test(current_page);
+			regex_entry.pgld_reqs.forEach((regex_pgld_entry, regex_pgld_entry_idx) => {
+				if (regex_pgld_entry.pgld_req.next_pattern_idx === -1 && is_active) {
+					regex_pgld_entry.pgld_req.next_pattern_idx = regex_pgld_entry.pattern_idx;
+				}
+			});
+		});
+
+		// Call all 'unload' handlers.
+		pgld_req_store.forEach(pgld_req => {
+			// If page was active, but not anymore, call the unload handler
+			if ((pgld_req.pattern_idx !== -1) && (pgld_req.next_pattern_idx === -1)) {
+				try {
+					pgld_req.unload_handler(last_page, pgld_req.pattern_idx);
+				} catch(e) {}
+			}
+			pgld_req.pattern_idx = pgld_req.next_pattern_idx;
+			pgld_req.next_pattern_idx = -1;
+		});
+
+		// Call all 'load' handlers.
+		pgld_req_store.forEach(pgld_req => {
+			if (pgld_req.pattern_idx !== -1) {
+				try {
+					pgld_req.load_handler(current_page, pgld_req.pattern_idx);
+				} catch(e) {}
+			}
+		});
+	}
+
+	let first_pageload = true;
+	let skip_turbo_load = null;
+	function delayed_pageload(event) {
+		if (!event) { // If 'doc ready'
+			if (!first_pageload) return; // Shouldn't happen, but just in case...
+			skip_turbo_load = location.href.replace(/#.*/g,'');
+		} else { // If 'turbo:load'
+			if (skip_turbo_load === event.detail.url) {
+				skip_turbo_load = null;
+				return;
+			}
+			skip_turbo_load = null;
+		}
+		first_pageload = false;
+		setTimeout(handle_pageload.bind(null, event), 10);
 	}
 
 	//########################################################################
@@ -602,10 +672,6 @@
 		wkof.set_state('wkof.document', 'ready');
 	}
 
-	function is_turbo_page() {
-		return (document.querySelector('script[type="importmap"]')?.innerHTML.match('@hotwired/turbo') != null);
-	}
-
 	//########################################################################
 	// Bootloader Startup
 	//------------------------------
@@ -613,11 +679,18 @@
 		global.wkof = published_interface;
 
 		// Handle page-loading/unloading events.
-		if (is_turbo_page()) {
-			addEventListener('turbo:load', (e) => handle_page_events('load', e));
-		} else {
-			ready('document').then((e) => handle_page_events('load'));
+		function install_load_listener() {
+			if (!document.documentElement) {
+				setTimeout(install_load_listener, 10);
+				return;
+			}
+			document.documentElement.addEventListener('turbo:load', delayed_pageload);
 		}
+		install_load_listener();
+
+		ready('document').then((e) => {
+			if (first_pageload) delayed_pageload();
+		});
 
 		// Mark document state as 'ready'.
 		if (document.readyState === 'complete') {

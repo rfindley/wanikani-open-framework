@@ -1119,7 +1119,7 @@ function do_something() {
 
 ### <a id="menu_insert_script_link">`wkof.Menu.insert_script_link(config)`</a>
 
-Retrieves a set of items, applies filters to select a subset of those items, and returns an array of the resulting items.  These items can then be indexed by specific fields using the `get_index()` function.
+Inserts a link into the WaniKani Account Menu.
 
 #### Parameters:
 * **`config`** - An object describing the link to be installed.  _(see `Config` below)_
